@@ -2,18 +2,18 @@
 	import { onMount } from 'svelte';
 	import AddPlayersDialog from '$lib/components/AddPlayersDialog.svelte';
 	import PlayerRoster from '$lib/components/PlayerRoster.svelte';
-	import type { Player } from '$lib/players';
-	import {
-		clearWorkspace,
-		emptyWorkspace,
-		loadWorkspace,
-		saveWorkspace,
-		type Workspace
-	} from '$lib/storage';
+	import TeamSetup from '$lib/components/TeamSetup.svelte';
+	import WorkflowNav from '$lib/components/WorkflowNav.svelte';
+	import { getRosterIssues } from '$lib/players';
+	import { clearWorkspace, emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
+	import { isValidTeamCount } from '$lib/teams';
+	import type { Player } from '$lib/types/players.types';
+	import type { Workspace } from '$lib/types/storage.types';
 
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
 	let formKey = $state(0);
+	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
 
 	onMount(() => {
 		const loaded = loadWorkspace(localStorage);
@@ -22,7 +22,11 @@
 	});
 
 	function commitRoster(roster: Player[]) {
-		workspace = { ...workspace, roster };
+		saveWorkspaceState({ schemaVersion: 1, screen: 'players', roster });
+	}
+
+	function saveWorkspaceState(next: Workspace) {
+		workspace = next;
 		if (!saveWorkspace(localStorage, workspace)) {
 			storageMessage = 'Changes could not be saved on this device.';
 		}
@@ -44,10 +48,24 @@
 		workspace = emptyWorkspace();
 		formKey++;
 	}
+
+	function openSetup() {
+		if (!rosterReady) return;
+		saveWorkspaceState({ ...workspace, screen: 'setup' });
+	}
+
+	function openPlayers() {
+		saveWorkspaceState({ ...workspace, screen: 'players' });
+	}
+
+	function chooseTeamCount(teamCount: number) {
+		if (!isValidTeamCount(workspace.roster.length, teamCount)) return;
+		saveWorkspaceState({ ...workspace, teamCount });
+	}
 </script>
 
 <svelte:head>
-	<title>Players · QTeam</title>
+	<title>{workspace.screen === 'players' ? 'Players' : 'Team setup'} · QTeam</title>
 	<meta
 		name="description"
 		content="Add or import outfield football players and their eligible positions."
@@ -55,12 +73,12 @@
 </svelte:head>
 
 <div class="flex flex-col gap-8">
-	<header class="flex flex-col gap-2">
-		<h1 class="text-2xl/8 font-medium">Build your player list</h1>
-		<p class="text-base/6 text-(--color-muted)">
-			Add players and the positions they can play. QTeam will use them to create balanced teams.
-		</p>
-	</header>
+	<WorkflowNav
+		screen={workspace.screen}
+		canOpenSetup={rosterReady}
+		onPlayers={openPlayers}
+		onSetup={openSetup}
+	/>
 
 	{#if storageMessage}
 		<div
@@ -76,24 +94,40 @@
 		</div>
 	{/if}
 
-	<aside
-		class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
-		aria-label="Goalkeeper notice"
-	>
-		<p class="font-medium">Outfield players only</p>
-		<p class="text-(--color-muted)">
-			QTeam does not include goalkeepers. Add only outfield players.
-		</p>
-	</aside>
+	{#if workspace.screen === 'players'}
+		<header class="flex flex-col gap-2">
+			<h1 class="text-2xl/8 font-medium">Build your player list</h1>
+			<p class="text-base/6 text-(--color-muted)">
+				Add players and the positions they can play. QTeam will use them to create balanced teams.
+			</p>
+		</header>
 
-	{#key formKey}
-		<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
-	{/key}
+		<aside
+			class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
+			aria-label="Goalkeeper notice"
+		>
+			<p class="font-medium">Outfield players only</p>
+			<p class="text-(--color-muted)">
+				QTeam does not include goalkeepers. Add only outfield players.
+			</p>
+		</aside>
 
-	<PlayerRoster
-		players={workspace.roster}
-		onUpdate={updatePlayer}
-		onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
-		onStartOver={startOver}
-	/>
+		{#key formKey}
+			<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+		{/key}
+
+		<PlayerRoster
+			players={workspace.roster}
+			onUpdate={updatePlayer}
+			onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
+			onStartOver={startOver}
+			onContinue={openSetup}
+		/>
+	{:else}
+		<TeamSetup
+			playerCount={workspace.roster.length}
+			teamCount={workspace.teamCount}
+			onChoose={chooseTeamCount}
+		/>
+	{/if}
 </div>

@@ -1,21 +1,21 @@
-import { isPosition, type Player } from './players';
+import { getRosterIssues, isPosition } from './players';
+import { isValidTeamCount } from './teams';
+import type { Player } from './types/players.types';
+import type { StorageLike, Workspace } from './types/storage.types';
 
 export const WORKSPACE_KEY = 'qteam.workspace.v1';
-
-export type Workspace = {
-	schemaVersion: 1;
-	screen: 'players';
-	roster: Player[];
-};
-
-type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 export function emptyWorkspace(): Workspace {
 	return { schemaVersion: 1, screen: 'players', roster: [] };
 }
 
 export function decodeWorkspace(value: unknown): Workspace | null {
-	if (!isRecord(value) || value.schemaVersion !== 1 || value.screen !== 'players') return null;
+	if (
+		!isRecord(value) ||
+		value.schemaVersion !== 1 ||
+		(value.screen !== 'players' && value.screen !== 'setup')
+	)
+		return null;
 	if (!Array.isArray(value.roster)) return null;
 
 	const roster: Player[] = [];
@@ -39,7 +39,20 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		});
 	}
 
-	return { schemaVersion: 1, screen: 'players', roster };
+	const teamCount = value.teamCount;
+	if (
+		teamCount !== undefined &&
+		(typeof teamCount !== 'number' || !isValidTeamCount(roster.length, teamCount))
+	)
+		return null;
+	if (value.screen === 'setup' && getRosterIssues(roster).length) return null;
+
+	return {
+		schemaVersion: 1,
+		screen: value.screen,
+		roster,
+		...(teamCount === undefined ? {} : { teamCount })
+	};
 }
 
 export function loadWorkspace(storage: StorageLike): {

@@ -1,17 +1,28 @@
 import { expect, test } from '@playwright/test';
 
-test('centres the add players dialog', async ({ page }) => {
+test('offers valid team counts and restores the selected setup', async ({ page }) => {
 	await page.goto('./');
+	await expect(page.getByRole('button', { name: 'Team setup' })).toBeDisabled();
 	await page.getByRole('button', { name: 'Add players' }).click();
+	await page
+		.getByLabel('Player list')
+		.fill(Array.from({ length: 31 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
+	await page.getByRole('button', { name: /Add 31 imported players/ }).click();
+	await page.getByRole('button', { name: 'Choose teams' }).click();
 
-	const dialog = page.locator('dialog');
-	const box = await dialog.boundingBox();
-	const viewport = page.viewportSize();
+	await expect(page.getByRole('heading', { name: 'Set up teams' })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^3 teams/ })).toHaveCount(0);
+	const fourTeams = page.getByRole('button', { name: /4 teams.*8, 8, 8, 7 players/ });
+	await fourTeams.click();
+	await expect(fourTeams).toHaveAttribute('aria-pressed', 'true');
 
-	expect(box).not.toBeNull();
-	expect(viewport).not.toBeNull();
-	expect(Math.abs(box!.x + box!.width / 2 - viewport!.width / 2)).toBeLessThanOrEqual(1);
-	expect(Math.abs(box!.y + box!.height / 2 - viewport!.height / 2)).toBeLessThanOrEqual(1);
+	await page.reload();
+
+	await expect(page).toHaveTitle('Team setup · QTeam');
+	await expect(page.getByRole('button', { name: /4 teams.*8, 8, 8, 7 players/ })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
 });
 
 test('imports valid players, keeps errors editable, and restores the roster', async ({ page }) => {

@@ -28,33 +28,6 @@
 		</div>
 	</header>
 
-	<nav
-		class="flex justify-center border-b border-black/10 bg-(--color-surface)"
-		aria-label="Team creation"
-	>
-		<ol class="flex w-full max-w-3xl gap-6 px-4 sm:px-6 lg:px-8">
-			<li>
-				<a
-					class="flex min-h-11 items-center border-b-2 border-(--color-brand) text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
-					href={resolve('/')}
-					aria-current="page">Players</a
-				>
-			</li>
-			<li>
-				<span
-					class="flex min-h-11 items-center text-sm text-(--color-disabled)"
-					aria-disabled="true">Team setup</span
-				>
-			</li>
-			<li>
-				<span
-					class="flex min-h-11 items-center text-sm text-(--color-disabled)"
-					aria-disabled="true">Teams</span
-				>
-			</li>
-		</ol>
-	</nav>
-
 	<main class="w-full max-w-3xl flex-1 self-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 		{@render children()}
 	</main>

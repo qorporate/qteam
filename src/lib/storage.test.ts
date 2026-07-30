@@ -5,9 +5,9 @@ import {
 	decodeWorkspace,
 	emptyWorkspace,
 	loadWorkspace,
-	saveWorkspace,
-	type Workspace
+	saveWorkspace
 } from './storage';
+import type { Workspace } from './types/storage.types';
 
 class MemoryStorage {
 	values = new Map<string, string>();
@@ -72,9 +72,27 @@ describe('workspace persistence', () => {
 		expect(loadWorkspace(storage).workspace.roster[0].name).toBe('Femi');
 	});
 
+	it('round-trips a valid team setup', () => {
+		const storage = new MemoryStorage();
+		const setup: Workspace = {
+			schemaVersion: 1,
+			screen: 'setup',
+			teamCount: 2,
+			roster: Array.from({ length: 8 }, (_, index) => ({
+				id: `player-${index}`,
+				name: `Player ${index + 1}`,
+				eligiblePositions: ['MIDFIELDER']
+			}))
+		};
+
+		expect(saveWorkspace(storage, setup)).toBe(true);
+		expect(loadWorkspace(storage)).toEqual({ workspace: setup });
+	});
+
 	it.each([
 		{ ...workspace, schemaVersion: 2 },
 		{ ...workspace, screen: 'teams' },
+		{ ...workspace, teamCount: 2 },
 		{ ...workspace, roster: [{ id: 'player-1', name: 'Femi', eligiblePositions: ['GOALKEEPER'] }] },
 		{
 			...workspace,

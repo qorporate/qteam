@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ManualPlayerForm from '$lib/components/ManualPlayerForm.svelte';
 	import PlayerImport from '$lib/components/PlayerImport.svelte';
-	import type { Player } from '$lib/players';
+	import type { Player } from '$lib/types/players.types';
 
 	let { onAdd }: { onAdd: (players: Player[]) => void } = $props();
 	let dialog: HTMLDialogElement;

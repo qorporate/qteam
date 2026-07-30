@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createPlayer,
-	getRosterIssues,
-	parsePlayerList,
-	togglePosition,
-	type Player
-} from './players';
+import { createPlayer, getRosterIssues, parsePlayerList, togglePosition } from './players';
+import type { Player } from './types/players.types';
 
 describe('parsePlayerList', () => {
 	it('parses numbered and unnumbered Qball lines with fixed aliases', () => {

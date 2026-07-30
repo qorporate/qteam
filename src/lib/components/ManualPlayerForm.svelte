@@ -1,12 +1,6 @@
 <script lang="ts">
-	import {
-		POSITIONS,
-		POSITION_LABELS,
-		createPlayer,
-		togglePosition,
-		type Player,
-		type Position
-	} from '$lib/players';
+	import { POSITIONS, POSITION_LABELS, createPlayer, togglePosition } from '$lib/players';
+	import type { Player, Position } from '$lib/types/players.types';
 
 	let {
 		onAdd,

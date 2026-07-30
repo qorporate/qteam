@@ -1,25 +1,19 @@
 <script lang="ts">
-	import {
-		POSITIONS,
-		POSITION_LABELS,
-		getRosterIssues,
-		togglePosition,
-		type Player,
-		type Position
-	} from '$lib/players';
-
-	type PlayerUpdate = Partial<Pick<Player, 'name' | 'eligiblePositions'>>;
+	import { POSITIONS, POSITION_LABELS, getRosterIssues, togglePosition } from '$lib/players';
+	import type { Player, PlayerUpdate, Position } from '$lib/types/players.types';
 
 	let {
 		players,
 		onUpdate,
 		onRemove,
-		onStartOver
+		onStartOver,
+		onContinue
 	}: {
 		players: Player[];
 		onUpdate: (id: string, update: PlayerUpdate) => void;
 		onRemove: (id: string) => void;
 		onStartOver: () => void;
+		onContinue: () => void;
 	} = $props();
 
 	const issues = $derived(getRosterIssues(players));
@@ -133,6 +127,11 @@
 			</ul>
 		{:else}
 			<p class="text-(--color-muted)">Every player has a name and at least one position.</p>
+			<button
+				class="min-h-11 self-start rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+				type="button"
+				onclick={onContinue}>Choose teams</button
+			>
 		{/if}
 	</div>
 </section>

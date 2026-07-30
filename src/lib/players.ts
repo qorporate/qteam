@@ -1,31 +1,17 @@
-export const POSITIONS = ['DEFENDER', 'MIDFIELDER', 'FORWARD'] as const;
+import type {
+	ParseError,
+	ParseResult,
+	ParsedPlayer,
+	Player,
+	PlayerDraft,
+	Position
+} from './types/players.types';
 
-export type Position = (typeof POSITIONS)[number];
-
-export type Player = {
-	id: string;
-	name: string;
-	eligiblePositions: Position[];
-};
-
-export type PlayerDraft = Omit<Player, 'id'>;
-
-export type ParsedPlayer = {
-	line: number;
-	input: string;
-	player: PlayerDraft;
-};
-
-export type ParseError = {
-	line: number;
-	input: string;
-	message: string;
-};
-
-export type ParseResult = {
-	players: ParsedPlayer[];
-	errors: ParseError[];
-};
+export const POSITIONS = [
+	'DEFENDER',
+	'MIDFIELDER',
+	'FORWARD'
+] as const satisfies readonly Position[];
 
 export const POSITION_LABELS: Record<Position, string> = {
 	DEFENDER: 'Defender',

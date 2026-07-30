@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createPlayer, parsePlayerList, type Player } from '$lib/players';
+	import { createPlayer, parsePlayerList } from '$lib/players';
+	import type { Player } from '$lib/types/players.types';
 
 	let {
 		onAdd,
