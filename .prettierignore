@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+DESIGN.md
+QSET_DESIGN.md
+docs/qteam_flow.md
