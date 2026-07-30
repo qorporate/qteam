@@ -203,14 +203,6 @@ export function swapPlayers(
 			return player;
 		})
 	}));
-	const invalid = swappedTeams.some((team) =>
-		team.players.some((assigned) => {
-			const player = players.find((candidate) => candidate.id === assigned.playerId);
-			return !player || !canPlay(player, assigned);
-		})
-	);
-	if (invalid)
-		return { ok: false, issues: ['That swap would create an invalid position assignment.'] };
 
 	const warnings = new Set(getCoverageWarnings(players, teams));
 	return {

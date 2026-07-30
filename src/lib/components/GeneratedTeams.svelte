@@ -24,8 +24,7 @@
 	function assignedPlayers(team: GeneratedTeam, position: Position): Player[] {
 		return team.players
 			.filter((assigned) => assigned.assignedPosition === position)
-			.map((assigned) => playersById.get(assigned.playerId))
-			.filter((player): player is Player => Boolean(player));
+			.map((assigned) => playersById.get(assigned.playerId)!);
 	}
 
 	function selectPlayer(team: GeneratedTeam, playerId: string) {

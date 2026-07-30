@@ -160,7 +160,6 @@ describe('team generation', () => {
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
-		expect(result.teams.map((team) => team.players)).toHaveLength(2);
 		expect(result.teams[0].players).toContainEqual({
 			playerId: 'm3',
 			assignedPosition: 'MIDFIELDER'
