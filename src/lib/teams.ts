@@ -1,6 +1,11 @@
 import { POSITIONS, getRosterIssues, isPosition } from './players';
 import type { Player, Position } from './types/players.types';
-import type { GenerateTeamsInput, GenerateTeamsResult, GeneratedTeam } from './types/teams.types';
+import type {
+	GenerateTeamsInput,
+	GenerateTeamsResult,
+	GeneratedTeam,
+	SwapResult
+} from './types/teams.types';
 
 const preferredFormations: Record<number, Record<Position, number>> = {
 	4: { DEFENDER: 1, MIDFIELDER: 2, FORWARD: 1 },
@@ -171,6 +176,50 @@ export function getCoverageWarnings(players: Player[], teams: GeneratedTeam[]): 
 	});
 
 	return warnings;
+}
+
+export function swapPlayers(
+	players: Player[],
+	teams: GeneratedTeam[],
+	firstPlayerId: string,
+	secondPlayerId: string
+): SwapResult {
+	const firstTeam = teams.find((team) =>
+		team.players.some((player) => player.playerId === firstPlayerId)
+	);
+	const secondTeam = teams.find((team) =>
+		team.players.some((player) => player.playerId === secondPlayerId)
+	);
+	if (!firstTeam || !secondTeam) return { ok: false, issues: ['Choose two players in the teams.'] };
+	if (firstTeam === secondTeam) return { ok: false, issues: ['Choose a player on another team.'] };
+
+	const first = firstTeam.players.find((player) => player.playerId === firstPlayerId)!;
+	const second = secondTeam.players.find((player) => player.playerId === secondPlayerId)!;
+	const swappedTeams = teams.map((team) => ({
+		...team,
+		players: team.players.map((player) => {
+			if (player.playerId === firstPlayerId) return second;
+			if (player.playerId === secondPlayerId) return first;
+			return player;
+		})
+	}));
+	const invalid = swappedTeams.some((team) =>
+		team.players.some((assigned) => {
+			const player = players.find((candidate) => candidate.id === assigned.playerId);
+			return !player || !canPlay(player, assigned);
+		})
+	);
+	if (invalid)
+		return { ok: false, issues: ['That swap would create an invalid position assignment.'] };
+
+	const warnings = new Set(getCoverageWarnings(players, teams));
+	return {
+		ok: true,
+		teams: swappedTeams,
+		addedWarnings: getCoverageWarnings(players, swappedTeams).filter(
+			(warning) => !warnings.has(warning)
+		)
+	};
 }
 
 export function teamName(index: number): string {

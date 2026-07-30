@@ -5,7 +5,8 @@ import {
 	getGenerationIssues,
 	getTeamSizes,
 	getValidTeamCounts,
-	isValidTeamCount
+	isValidTeamCount,
+	swapPlayers
 } from './teams';
 import type { Player } from './types/players.types';
 
@@ -122,6 +123,74 @@ describe('team generation', () => {
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 		expect(result.warnings).toContain('Only 1 defender was available for 2 teams.');
+	});
+
+	it('swaps players across teams and reports added coverage warnings', () => {
+		const players: Player[] = [
+			{ id: 'd1', name: 'Defender 1', eligiblePositions: ['DEFENDER'] },
+			{ id: 'd2', name: 'Defender 2', eligiblePositions: ['DEFENDER'] },
+			{ id: 'd3', name: 'Defender 3', eligiblePositions: ['DEFENDER'] },
+			{ id: 'm1', name: 'Midfielder 1', eligiblePositions: ['MIDFIELDER'] },
+			{ id: 'm2', name: 'Midfielder 2', eligiblePositions: ['MIDFIELDER'] },
+			{ id: 'm3', name: 'Midfielder 3', eligiblePositions: ['MIDFIELDER'] },
+			{ id: 'f1', name: 'Forward 1', eligiblePositions: ['FORWARD'] },
+			{ id: 'f2', name: 'Forward 2', eligiblePositions: ['FORWARD'] }
+		];
+		const teams = [
+			{
+				id: 'team-1',
+				players: [
+					{ playerId: 'd1', assignedPosition: 'DEFENDER' as const },
+					{ playerId: 'm1', assignedPosition: 'MIDFIELDER' as const },
+					{ playerId: 'm2', assignedPosition: 'MIDFIELDER' as const },
+					{ playerId: 'f1', assignedPosition: 'FORWARD' as const }
+				]
+			},
+			{
+				id: 'team-2',
+				players: [
+					{ playerId: 'd2', assignedPosition: 'DEFENDER' as const },
+					{ playerId: 'd3', assignedPosition: 'DEFENDER' as const },
+					{ playerId: 'm3', assignedPosition: 'MIDFIELDER' as const },
+					{ playerId: 'f2', assignedPosition: 'FORWARD' as const }
+				]
+			}
+		];
+		const result = swapPlayers(players, teams, 'd1', 'm3');
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.teams.map((team) => team.players)).toHaveLength(2);
+		expect(result.teams[0].players).toContainEqual({
+			playerId: 'm3',
+			assignedPosition: 'MIDFIELDER'
+		});
+		expect(result.teams[1].players).toContainEqual({
+			playerId: 'd1',
+			assignedPosition: 'DEFENDER'
+		});
+		expect(result.addedWarnings).toContain('Team A has no assigned defender.');
+	});
+
+	it('rejects same-team and unknown-player swaps', () => {
+		const generated = generateTeams({ players: roster, teamCount: 2, seed: 'swaps' });
+		expect(generated.ok).toBe(true);
+		if (!generated.ok) return;
+
+		expect(
+			swapPlayers(
+				roster,
+				generated.teams,
+				generated.teams[0].players[0].playerId,
+				generated.teams[0].players[1].playerId
+			)
+		).toEqual({ ok: false, issues: ['Choose a player on another team.'] });
+		expect(
+			swapPlayers(roster, generated.teams, 'unknown', generated.teams[1].players[0].playerId)
+		).toEqual({
+			ok: false,
+			issues: ['Choose two players in the teams.']
+		});
 	});
 
 	it('rejects an invalid generation request', () => {

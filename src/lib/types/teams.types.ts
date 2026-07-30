@@ -24,3 +24,6 @@ export type GenerateTeamsInput = {
 export type GenerateTeamsResult =
 	| { ok: true; seed: string; teams: GeneratedTeam[]; warnings: string[] }
 	| { ok: false; issues: string[] };
+
+export type SwapResult =
+	{ ok: true; teams: GeneratedTeam[]; addedWarnings: string[] } | { ok: false; issues: string[] };

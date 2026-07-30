@@ -10,6 +10,7 @@
 	import { generateTeams, isValidTeamCount } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
+	import type { GeneratedTeam } from '$lib/types/teams.types';
 
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
@@ -89,6 +90,11 @@
 			screen: 'teams',
 			generated: { seed: result.seed, teams: result.teams }
 		});
+	}
+
+	function saveSwap(teams: GeneratedTeam[]) {
+		if (!workspace.generated) return;
+		saveWorkspaceState({ ...workspace, generated: { ...workspace.generated, teams } });
 	}
 </script>
 
@@ -171,6 +177,7 @@
 			players={workspace.roster}
 			generated={workspace.generated!}
 			onGenerate={generate}
+			onSwap={saveSwap}
 		/>
 	{/if}
 </div>

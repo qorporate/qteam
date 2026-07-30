@@ -1,27 +1,63 @@
 <script lang="ts">
 	import { POSITION_LABELS, POSITIONS } from '$lib/players';
-	import { formatFormation, getCoverageWarnings, teamName } from '$lib/teams';
+	import { formatFormation, getCoverageWarnings, swapPlayers, teamName } from '$lib/teams';
 	import type { Player, Position } from '$lib/types/players.types';
 	import type { GeneratedResult, GeneratedTeam } from '$lib/types/teams.types';
 
 	let {
 		players,
 		generated,
-		onGenerate
+		onGenerate,
+		onSwap
 	}: {
 		players: Player[];
 		generated: GeneratedResult;
 		onGenerate: () => void;
+		onSwap: (teams: GeneratedTeam[]) => void;
 	} = $props();
 
 	const playersById = $derived(new Map(players.map((player) => [player.id, player])));
 	const warnings = $derived(getCoverageWarnings(players, generated.teams));
+	let selected = $state<{ teamId: string; playerId: string }>();
+	let swapMessage = $state('');
 
 	function assignedPlayers(team: GeneratedTeam, position: Position): Player[] {
 		return team.players
 			.filter((assigned) => assigned.assignedPosition === position)
 			.map((assigned) => playersById.get(assigned.playerId))
 			.filter((player): player is Player => Boolean(player));
+	}
+
+	function selectPlayer(team: GeneratedTeam, playerId: string) {
+		if (!selected) {
+			selected = { teamId: team.id, playerId };
+			swapMessage = 'Choose a player on another team.';
+			return;
+		}
+		if (selected.playerId === playerId) {
+			selected = undefined;
+			swapMessage = '';
+			return;
+		}
+		if (selected.teamId === team.id) {
+			swapMessage = 'Choose a player on another team.';
+			return;
+		}
+
+		const result = swapPlayers(players, generated.teams, selected.playerId, playerId);
+		if (!result.ok) {
+			swapMessage = result.issues.join(' ');
+			return;
+		}
+		if (
+			result.addedWarnings.length &&
+			!confirm(`${result.addedWarnings.join('\n')} Apply this swap?`)
+		) {
+			return;
+		}
+		onSwap(result.teams);
+		selected = undefined;
+		swapMessage = 'Swapped players.';
 	}
 </script>
 
@@ -37,6 +73,11 @@
 			onclick={onGenerate}>Generate another</button
 		>
 	</header>
+
+	<p class="text-sm/5 text-(--color-muted)">Tap two players from different teams to swap them.</p>
+	{#if swapMessage}
+		<p class="text-sm/5" aria-live="polite">{swapMessage}</p>
+	{/if}
 
 	{#if warnings.length}
 		<aside
@@ -74,11 +115,24 @@
 					{#if assigned.length}
 						<div class="flex flex-col gap-1">
 							<h3 class="text-sm/5 font-bold">{POSITION_LABELS[position]}s</h3>
-							<ol class="flex flex-col gap-1 text-sm/5 text-(--color-muted)">
+							<ul class="flex flex-col gap-1 text-sm/5 text-(--color-muted)">
 								{#each assigned as player, playerIndex (player.id)}
-									<li>{playerIndex + 1}. {player.name}</li>
+									<li>
+										<button
+											class={[
+												'flex min-h-11 w-full items-center rounded-lg px-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)',
+												selected?.playerId === player.id
+													? 'bg-(--color-brand-soft) text-(--color-ink)'
+													: 'bg-(--color-surface-muted)'
+											]}
+											type="button"
+											aria-pressed={selected?.playerId === player.id}
+											onclick={() => selectPlayer(team, player.id)}
+											>{playerIndex + 1}. {player.name}</button
+										>
+									</li>
 								{/each}
-							</ol>
+							</ul>
 						</div>
 					{/if}
 				{/each}

@@ -18,11 +18,24 @@ test('generates teams and restores them after reload', async ({ page }) => {
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 	await expect(page.getByRole('heading', { name: 'Generated teams' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
+	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
+	const teamB = page.getByRole('heading', { name: 'Team B' }).locator('xpath=ancestor::section');
+	const playerFromTeamB = (await teamB.getByRole('button').first().textContent())?.replace(
+		/^\d+\.\s*/,
+		''
+	);
+	await teamA.getByRole('button').first().click();
+	await teamB.getByRole('button').first().click();
+	await expect(page.getByText('Swapped players.')).toBeVisible();
+	await expect(teamA).toContainText(playerFromTeamB ?? '');
 
 	await page.reload();
 
 	await expect(page).toHaveTitle('Teams · QTeam');
 	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
+	await expect(
+		page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section')
+	).toContainText(playerFromTeamB ?? '');
 });
 
 test('imports valid players, keeps errors editable, and restores the roster', async ({ page }) => {

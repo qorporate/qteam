@@ -260,8 +260,8 @@ Swaps are one-for-one between different teams, so sizes remain valid.
 3. Confirm if the swap adds a coverage warning.
 4. Apply the swap and recalculate formations and warnings.
 
-Assigned positions move with the players and remain eligible. Automatic reassignment of other
-players is deferred until real use shows it is needed.
+Assigned positions move with the players and remain valid, including the defensive fallback.
+Automatic reassignment of other players is deferred until real use shows it is needed.
 
 The user may accept a positionally worse swap. Drag-and-drop, undo history, and a stored baseline
 are not part of the first release. Generate another remains available.
