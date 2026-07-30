@@ -91,6 +91,8 @@ Use a 4 px base grid.
 - Use `8–12px` inside compact controls.
 - Use `16px` inside cards and between related elements.
 - Use `24–32px` between sections.
+- Let parent containers own spacing. Prefer flex or grid `gap` and padding.
+- Avoid margins for component layout unless the spacing cannot reasonably belong to a parent.
 - Prefer spacing over divider lines.
 - Minimum interactive target: `44 × 44px`.
 

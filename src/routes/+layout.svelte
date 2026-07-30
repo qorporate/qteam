@@ -12,8 +12,8 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-(--color-canvas) text-(--color-ink)">
-	<header class="border-b border-black/10 bg-(--color-surface)">
-		<div class="mx-auto flex h-16 max-w-3xl items-center px-4 sm:px-6 lg:px-8">
+	<header class="flex justify-center border-b border-black/10 bg-(--color-surface)">
+		<div class="flex h-16 w-full max-w-3xl items-center px-4 sm:px-6 lg:px-8">
 			<a
 				class="flex min-h-11 items-center gap-2 rounded-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
 				href={resolve('/')}
@@ -28,8 +28,11 @@
 		</div>
 	</header>
 
-	<nav class="border-b border-black/10 bg-(--color-surface)" aria-label="Team creation">
-		<ol class="mx-auto flex max-w-3xl gap-6 px-4 sm:px-6 lg:px-8">
+	<nav
+		class="flex justify-center border-b border-black/10 bg-(--color-surface)"
+		aria-label="Team creation"
+	>
+		<ol class="flex w-full max-w-3xl gap-6 px-4 sm:px-6 lg:px-8">
 			<li>
 				<a
 					class="flex min-h-11 items-center border-b-2 border-(--color-brand) text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
@@ -52,7 +55,7 @@
 		</ol>
 	</nav>
 
-	<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+	<main class="w-full max-w-3xl flex-1 self-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 		{@render children()}
 	</main>
 </div>
