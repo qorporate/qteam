@@ -18,14 +18,30 @@ test('generates teams and restores them after reload', async ({ page }) => {
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 	await expect(page.getByRole('heading', { name: 'Generated teams' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
+	await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], {
+		origin: 'http://127.0.0.1:4173'
+	});
+	await page.getByRole('button', { name: 'Copy all' }).click();
+	await expect(page.getByText('All teams copied.')).toBeVisible();
 	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
 	const teamB = page.getByRole('heading', { name: 'Team B' }).locator('xpath=ancestor::section');
-	const playerFromTeamB = (await teamB.getByRole('button').first().textContent())?.replace(
-		/^\d+\.\s*/,
-		''
-	);
-	await teamA.getByRole('button').first().click();
-	await teamB.getByRole('button').first().click();
+	const playerFromTeamB = (
+		await teamB
+			.locator('button')
+			.filter({ hasText: /^\d+\./ })
+			.first()
+			.textContent()
+	)?.replace(/^\d+\.\s*/, '');
+	await teamA
+		.locator('button')
+		.filter({ hasText: /^\d+\./ })
+		.first()
+		.click();
+	await teamB
+		.locator('button')
+		.filter({ hasText: /^\d+\./ })
+		.first()
+		.click();
 	await expect(page.getByText('Swapped players.')).toBeVisible();
 	await expect(teamA).toContainText(playerFromTeamB ?? '');
 

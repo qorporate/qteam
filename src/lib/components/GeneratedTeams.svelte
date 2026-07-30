@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { POSITION_LABELS, POSITIONS } from '$lib/players';
+	import { formatTeam, formatTeams } from '$lib/sharing';
 	import { formatFormation, getCoverageWarnings, swapPlayers, teamName } from '$lib/teams';
 	import type { Player, Position } from '$lib/types/players.types';
 	import type { GeneratedResult, GeneratedTeam } from '$lib/types/teams.types';
@@ -19,7 +21,12 @@
 	const playersById = $derived(new Map(players.map((player) => [player.id, player])));
 	const warnings = $derived(getCoverageWarnings(players, generated.teams));
 	let selected = $state<{ teamId: string; playerId: string }>();
-	let swapMessage = $state('');
+	let message = $state('');
+	let canShare = $state(false);
+
+	onMount(() => {
+		canShare = typeof navigator.share === 'function';
+	});
 
 	function assignedPlayers(team: GeneratedTeam, position: Position): Player[] {
 		return team.players
@@ -30,22 +37,22 @@
 	function selectPlayer(team: GeneratedTeam, playerId: string) {
 		if (!selected) {
 			selected = { teamId: team.id, playerId };
-			swapMessage = 'Choose a player on another team.';
+			message = 'Choose a player on another team.';
 			return;
 		}
 		if (selected.playerId === playerId) {
 			selected = undefined;
-			swapMessage = '';
+			message = '';
 			return;
 		}
 		if (selected.teamId === team.id) {
-			swapMessage = 'Choose a player on another team.';
+			message = 'Choose a player on another team.';
 			return;
 		}
 
 		const result = swapPlayers(players, generated.teams, selected.playerId, playerId);
 		if (!result.ok) {
-			swapMessage = result.issues.join(' ');
+			message = result.issues.join(' ');
 			return;
 		}
 		if (
@@ -56,7 +63,24 @@
 		}
 		onSwap(result.teams);
 		selected = undefined;
-		swapMessage = 'Swapped players.';
+		message = 'Swapped players.';
+	}
+
+	async function copy(text: string, label: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			message = `${label} copied.`;
+		} catch {
+			message = 'Copy failed. Select and copy the team text manually.';
+		}
+	}
+
+	async function share() {
+		try {
+			await navigator.share({ text: formatTeams(players, generated.teams) });
+		} catch {
+			message = 'Sharing was cancelled.';
+		}
 	}
 </script>
 
@@ -66,16 +90,30 @@
 			<h1 class="text-2xl/8 font-medium">Generated teams</h1>
 			<p class="text-base/6 text-(--color-muted)">Every player has been assigned once.</p>
 		</div>
-		<button
-			class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
-			type="button"
-			onclick={onGenerate}>Generate another</button
-		>
+		<div class="flex flex-wrap gap-2">
+			<button
+				class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+				type="button"
+				onclick={() => copy(formatTeams(players, generated.teams), 'All teams')}>Copy all</button
+			>
+			{#if canShare}
+				<button
+					class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+					type="button"
+					onclick={share}>Share</button
+				>
+			{/if}
+			<button
+				class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+				type="button"
+				onclick={onGenerate}>Generate another</button
+			>
+		</div>
 	</header>
 
 	<p class="text-sm/5 text-(--color-muted)">Tap two players from different teams to swap them.</p>
-	{#if swapMessage}
-		<p class="text-sm/5" aria-live="polite">{swapMessage}</p>
+	{#if message}
+		<p class="text-sm/5" aria-live="polite">{message}</p>
 	{/if}
 
 	{#if warnings.length}
@@ -103,10 +141,18 @@
 						<h2 id={`team-${team.id}`} class="text-xl/6 font-medium">Team {teamName(index)}</h2>
 						<p class="text-sm/5 text-(--color-muted)">{formatFormation(team)}</p>
 					</div>
-					<span
-						class="rounded-full bg-(--color-brand-soft) px-2 py-1 text-xs/4 font-bold tabular-nums"
-						>{team.players.length}</span
-					>
+					<div class="flex items-center gap-2">
+						<span
+							class="rounded-full bg-(--color-brand-soft) px-2 py-1 text-xs/4 font-bold tabular-nums"
+							>{team.players.length}</span
+						>
+						<button
+							class="min-h-11 rounded-lg bg-(--color-surface-muted) px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+							type="button"
+							onclick={() => copy(formatTeam(players, team, index), `Team ${teamName(index)}`)}
+							>Copy</button
+						>
+					</div>
 				</header>
 
 				{#each POSITIONS as position (position)}
