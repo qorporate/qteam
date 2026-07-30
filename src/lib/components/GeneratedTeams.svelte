@@ -149,6 +149,7 @@
 						<button
 							class="min-h-11 rounded-lg bg-(--color-surface-muted) px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
 							type="button"
+							aria-label={`Copy Team ${teamName(index)}`}
 							onclick={() => copy(formatTeam(players, team, index), `Team ${teamName(index)}`)}
 							>Copy</button
 						>
