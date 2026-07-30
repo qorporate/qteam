@@ -1,18 +1,81 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import ManualPlayerForm from '$lib/components/ManualPlayerForm.svelte';
+	import PlayerImport from '$lib/components/PlayerImport.svelte';
+	import PlayerRoster from '$lib/components/PlayerRoster.svelte';
+	import type { Player } from '$lib/players';
+	import {
+		clearWorkspace,
+		emptyWorkspace,
+		loadWorkspace,
+		saveWorkspace,
+		type Workspace
+	} from '$lib/storage';
+
+	let workspace = $state<Workspace>(emptyWorkspace());
+	let storageMessage = $state('');
+	let formKey = $state(0);
+
+	onMount(() => {
+		const loaded = loadWorkspace(localStorage);
+		workspace = loaded.workspace;
+		storageMessage = loaded.error ?? '';
+	});
+
+	function commitRoster(roster: Player[]) {
+		workspace = { ...workspace, roster };
+		if (!saveWorkspace(localStorage, workspace)) {
+			storageMessage = 'Changes could not be saved on this device.';
+		}
+	}
+
+	function updatePlayer(id: string, update: Partial<Pick<Player, 'name' | 'eligiblePositions'>>) {
+		commitRoster(
+			workspace.roster.map((player) => (player.id === id ? { ...player, ...update } : player))
+		);
+	}
+
+	function startOver() {
+		if (!confirm('Start over? This removes every player from the roster.')) return;
+		if (!clearWorkspace(localStorage)) {
+			storageMessage = 'The saved roster could not be cleared.';
+			return;
+		}
+
+		workspace = emptyWorkspace();
+		formKey++;
+	}
+</script>
+
 <svelte:head>
 	<title>Players · QTeam</title>
 	<meta
 		name="description"
-		content="Turn a list of outfield football players into positionally balanced teams."
+		content="Add or import outfield football players and their eligible positions."
 	/>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-8">
 	<header class="flex flex-col gap-2">
 		<h1 class="text-2xl/8 font-medium">Build your player list</h1>
 		<p class="text-base/6 text-(--color-muted)">
 			Add players and the positions they can play. QTeam will use them to create balanced teams.
 		</p>
 	</header>
+
+	{#if storageMessage}
+		<div
+			class="flex items-start justify-between gap-4 rounded-xl bg-(--color-danger-soft) p-4 text-sm/5 text-(--color-danger)"
+			role="alert"
+		>
+			<p>{storageMessage}</p>
+			<button
+				class="min-h-11 shrink-0 rounded-lg px-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger)"
+				type="button"
+				onclick={() => (storageMessage = '')}>Dismiss</button
+			>
+		</div>
+	{/if}
 
 	<aside
 		class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
@@ -24,16 +87,15 @@
 		</p>
 	</aside>
 
-	<section
-		class="flex flex-col gap-4 rounded-2xl bg-(--color-surface) p-6"
-		aria-labelledby="empty-roster"
-	>
-		<p class="text-[40px]/11 font-medium tabular-nums">0</p>
-		<div class="flex flex-col gap-2">
-			<h2 id="empty-roster" class="text-xl/6 font-medium">No players yet</h2>
-			<p class="text-base/6 text-(--color-muted)">
-				Add or import players to start building your roster.
-			</p>
-		</div>
-	</section>
+	{#key formKey}
+		<PlayerImport onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+		<ManualPlayerForm onAdd={(player) => commitRoster([...workspace.roster, player])} />
+	{/key}
+
+	<PlayerRoster
+		players={workspace.roster}
+		onUpdate={updatePlayer}
+		onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
+		onStartOver={startOver}
+	/>
 </div>

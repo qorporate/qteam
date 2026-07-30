@@ -1,0 +1,110 @@
+import { describe, expect, it } from 'vitest';
+import {
+	WORKSPACE_KEY,
+	clearWorkspace,
+	decodeWorkspace,
+	emptyWorkspace,
+	loadWorkspace,
+	saveWorkspace,
+	type Workspace
+} from './storage';
+
+class MemoryStorage {
+	values = new Map<string, string>();
+
+	getItem(key: string) {
+		return this.values.get(key) ?? null;
+	}
+
+	setItem(key: string, value: string) {
+		this.values.set(key, value);
+	}
+
+	removeItem(key: string) {
+		this.values.delete(key);
+	}
+}
+
+const workspace: Workspace = {
+	schemaVersion: 1,
+	screen: 'players',
+	roster: [
+		{
+			id: 'player-1',
+			name: 'Femi',
+			eligiblePositions: ['DEFENDER', 'MIDFIELDER']
+		}
+	]
+};
+
+describe('workspace persistence', () => {
+	it('round-trips a valid workspace', () => {
+		const storage = new MemoryStorage();
+
+		expect(saveWorkspace(storage, workspace)).toBe(true);
+		expect(loadWorkspace(storage)).toEqual({ workspace });
+		expect(clearWorkspace(storage)).toBe(true);
+		expect(loadWorkspace(storage)).toEqual({ workspace: emptyWorkspace() });
+	});
+
+	it('loads an empty workspace when the key is missing', () => {
+		expect(loadWorkspace(new MemoryStorage())).toEqual({ workspace: emptyWorkspace() });
+	});
+
+	it('rejects malformed JSON and removes the broken document', () => {
+		const storage = new MemoryStorage();
+		storage.values.set(WORKSPACE_KEY, '{broken');
+
+		expect(loadWorkspace(storage)).toEqual({
+			workspace: emptyWorkspace(),
+			error: 'The saved roster was invalid and has been reset.'
+		});
+		expect(storage.values.has(WORKSPACE_KEY)).toBe(false);
+	});
+
+	it('trims player names before storage', () => {
+		const storage = new MemoryStorage();
+		saveWorkspace(storage, {
+			...workspace,
+			roster: [{ ...workspace.roster[0], name: '  Femi  ' }]
+		});
+
+		expect(loadWorkspace(storage).workspace.roster[0].name).toBe('Femi');
+	});
+
+	it.each([
+		{ ...workspace, schemaVersion: 2 },
+		{ ...workspace, screen: 'teams' },
+		{ ...workspace, roster: [{ id: 'player-1', name: 'Femi', eligiblePositions: ['GOALKEEPER'] }] },
+		{
+			...workspace,
+			roster: [
+				{ id: 'same', name: 'Femi', eligiblePositions: ['DEFENDER'] },
+				{ id: 'same', name: 'Mayor', eligiblePositions: ['FORWARD'] }
+			]
+		}
+	])('rejects an invalid workspace', (candidate) => {
+		expect(decodeWorkspace(candidate)).toBeNull();
+	});
+
+	it('keeps the application usable when storage throws', () => {
+		const brokenStorage = {
+			getItem: () => {
+				throw new Error('blocked');
+			},
+			setItem: () => {
+				throw new Error('full');
+			},
+			removeItem: () => {
+				throw new Error('blocked');
+			}
+		};
+
+		expect(loadWorkspace(brokenStorage)).toEqual({
+			workspace: emptyWorkspace(),
+			error: 'The saved roster could not be restored.'
+		});
+		expect(saveWorkspace(brokenStorage, workspace)).toBe(false);
+		expect(clearWorkspace(brokenStorage)).toBe(false);
+	});
+});
