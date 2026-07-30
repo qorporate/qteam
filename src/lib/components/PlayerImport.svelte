@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { createPlayer, parsePlayerList, type Player } from '$lib/players';
 
-	let { onAdd }: { onAdd: (players: Player[]) => void } = $props();
+	let {
+		onAdd,
+		onComplete
+	}: {
+		onAdd: (players: Player[]) => void;
+		onComplete: () => void;
+	} = $props();
 	let text = $state('');
 	let message = $state('');
 
@@ -14,15 +20,13 @@
 		onAdd(players);
 		text = result.errors.map(({ input }) => input).join('\n');
 		message = `${players.length} player${players.length === 1 ? '' : 's'} added.`;
+		if (!result.errors.length) onComplete();
 	}
 </script>
 
-<section
-	class="flex flex-col gap-5 rounded-2xl bg-(--color-surface) p-4 sm:p-6"
-	aria-labelledby="import-heading"
->
+<div class="flex flex-col gap-4">
 	<header class="flex flex-col gap-1">
-		<h2 id="import-heading" class="text-xl/6 font-medium">Import players</h2>
+		<h3 class="text-xl/6 font-medium">Import players</h3>
 		<p class="text-sm/5 text-(--color-muted)">
 			Paste one player per line using <code>Name - Position</code>.
 		</p>
@@ -73,4 +77,4 @@
 			<p class="text-sm/5 text-(--color-muted)" aria-live="polite">{message}</p>
 		{/if}
 	</div>
-</section>
+</div>

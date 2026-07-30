@@ -8,7 +8,13 @@
 		type Position
 	} from '$lib/players';
 
-	let { onAdd }: { onAdd: (player: Player) => void } = $props();
+	let {
+		onAdd,
+		onComplete
+	}: {
+		onAdd: (player: Player) => void;
+		onComplete: () => void;
+	} = $props();
 	let name = $state('');
 	let positions = $state<Position[]>([]);
 	let nameError = $state('');
@@ -24,6 +30,7 @@
 		onAdd(createPlayer({ name, eligiblePositions: positions }));
 		name = '';
 		positions = [];
+		onComplete();
 	}
 
 	function toggle(position: Position) {
@@ -32,14 +39,10 @@
 	}
 </script>
 
-<section
-	class="flex flex-col gap-3 rounded-2xl bg-(--color-surface) p-4"
-	aria-labelledby="manual-heading"
->
-	<h2 id="manual-heading" class="text-xl/6 font-medium">Add manually</h2>
-
+<details class="rounded-xl bg-(--color-surface-muted) p-3">
+	<summary class="min-h-11 cursor-pointer content-center font-medium">Add one manually</summary>
 	<form
-		class="flex flex-col gap-2"
+		class="flex flex-col gap-2 pt-3"
 		aria-label="Add player manually"
 		onsubmit={addPlayer}
 		novalidate
@@ -103,4 +106,4 @@
 			<span class="text-sm/5 text-(--color-danger)">{positionError}</span>
 		{/if}
 	</form>
-</section>
+</details>

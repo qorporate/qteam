@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import ManualPlayerForm from '$lib/components/ManualPlayerForm.svelte';
-	import PlayerImport from '$lib/components/PlayerImport.svelte';
+	import AddPlayersDialog from '$lib/components/AddPlayersDialog.svelte';
 	import PlayerRoster from '$lib/components/PlayerRoster.svelte';
 	import type { Player } from '$lib/players';
 	import {
@@ -88,8 +87,7 @@
 	</aside>
 
 	{#key formKey}
-		<PlayerImport onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
-		<ManualPlayerForm onAdd={(player) => commitRoster([...workspace.roster, player])} />
+		<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
 	{/key}
 
 	<PlayerRoster
