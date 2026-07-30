@@ -2,13 +2,17 @@
 	let {
 		screen,
 		canOpenSetup,
+		canOpenTeams,
 		onPlayers,
-		onSetup
+		onSetup,
+		onTeams
 	}: {
-		screen: 'players' | 'setup';
+		screen: 'players' | 'setup' | 'teams';
 		canOpenSetup: boolean;
+		canOpenTeams: boolean;
 		onPlayers: () => void;
 		onSetup: () => void;
+		onTeams: () => void;
 	} = $props();
 </script>
 
@@ -41,8 +45,15 @@
 			>
 		</li>
 		<li>
-			<span class="flex min-h-11 items-center text-sm text-(--color-disabled)" aria-disabled="true"
-				>Teams</span
+			<button
+				class={[
+					'flex min-h-11 items-center border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand) disabled:cursor-not-allowed disabled:text-(--color-disabled)',
+					screen === 'teams' ? 'border-(--color-brand)' : 'border-transparent'
+				]}
+				type="button"
+				disabled={!canOpenTeams}
+				aria-current={screen === 'teams' ? 'step' : undefined}
+				onclick={onTeams}>Teams</button
 			>
 		</li>
 	</ol>

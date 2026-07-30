@@ -89,6 +89,42 @@ describe('workspace persistence', () => {
 		expect(loadWorkspace(storage)).toEqual({ workspace: setup });
 	});
 
+	it('round-trips generated teams', () => {
+		const storage = new MemoryStorage();
+		const teams: Workspace = {
+			schemaVersion: 1,
+			screen: 'teams',
+			teamCount: 2,
+			roster: Array.from({ length: 8 }, (_, index) => ({
+				id: `player-${index}`,
+				name: `Player ${index + 1}`,
+				eligiblePositions: ['MIDFIELDER']
+			})),
+			generated: {
+				seed: 'saved',
+				teams: [
+					{
+						id: 'team-1',
+						players: Array.from({ length: 4 }, (_, index) => ({
+							playerId: `player-${index}`,
+							assignedPosition: 'MIDFIELDER' as const
+						}))
+					},
+					{
+						id: 'team-2',
+						players: Array.from({ length: 4 }, (_, index) => ({
+							playerId: `player-${index + 4}`,
+							assignedPosition: 'MIDFIELDER' as const
+						}))
+					}
+				]
+			}
+		};
+
+		expect(saveWorkspace(storage, teams)).toBe(true);
+		expect(loadWorkspace(storage)).toEqual({ workspace: teams });
+	});
+
 	it.each([
 		{ ...workspace, schemaVersion: 2 },
 		{ ...workspace, screen: 'teams' },

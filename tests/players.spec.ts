@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('offers valid team counts and restores the selected setup', async ({ page }) => {
+test('generates teams and restores them after reload', async ({ page }) => {
 	await page.goto('./');
 	await expect(page.getByRole('button', { name: 'Team setup' })).toBeDisabled();
 	await page.getByRole('button', { name: 'Add players' }).click();
@@ -15,14 +15,14 @@ test('offers valid team counts and restores the selected setup', async ({ page }
 	const fourTeams = page.getByRole('button', { name: /4 teams.*8, 8, 8, 7 players/ });
 	await fourTeams.click();
 	await expect(fourTeams).toHaveAttribute('aria-pressed', 'true');
+	await page.getByRole('button', { name: 'Generate teams' }).click();
+	await expect(page.getByRole('heading', { name: 'Generated teams' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
 
 	await page.reload();
 
-	await expect(page).toHaveTitle('Team setup · QTeam');
-	await expect(page.getByRole('button', { name: /4 teams.*8, 8, 8, 7 players/ })).toHaveAttribute(
-		'aria-pressed',
-		'true'
-	);
+	await expect(page).toHaveTitle('Teams · QTeam');
+	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
 });
 
 test('imports valid players, keeps errors editable, and restores the roster', async ({ page }) => {

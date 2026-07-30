@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AddPlayersDialog from '$lib/components/AddPlayersDialog.svelte';
+	import GeneratedTeams from '$lib/components/GeneratedTeams.svelte';
 	import PlayerRoster from '$lib/components/PlayerRoster.svelte';
 	import TeamSetup from '$lib/components/TeamSetup.svelte';
 	import WorkflowNav from '$lib/components/WorkflowNav.svelte';
 	import { getRosterIssues } from '$lib/players';
 	import { clearWorkspace, emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
-	import { isValidTeamCount } from '$lib/teams';
+	import { generateTeams, isValidTeamCount } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
 
@@ -22,6 +23,8 @@
 	});
 
 	function commitRoster(roster: Player[]) {
+		if (workspace.generated && !confirm('Changing the roster discards generated teams. Continue?'))
+			return;
 		saveWorkspaceState({ schemaVersion: 1, screen: 'players', roster });
 	}
 
@@ -60,12 +63,43 @@
 
 	function chooseTeamCount(teamCount: number) {
 		if (!isValidTeamCount(workspace.roster.length, teamCount)) return;
-		saveWorkspaceState({ ...workspace, teamCount });
+		if (workspace.teamCount === teamCount) return;
+		saveWorkspaceState({ schemaVersion: 1, screen: 'setup', roster: workspace.roster, teamCount });
+	}
+
+	function openTeams() {
+		if (!workspace.generated) return;
+		saveWorkspaceState({ ...workspace, screen: 'teams' });
+	}
+
+	function generate() {
+		if (!workspace.teamCount) return;
+		const result = generateTeams({
+			players: workspace.roster,
+			teamCount: workspace.teamCount,
+			seed: crypto.randomUUID()
+		});
+		if (!result.ok) {
+			storageMessage = result.issues.join(' ');
+			return;
+		}
+
+		saveWorkspaceState({
+			...workspace,
+			screen: 'teams',
+			generated: { seed: result.seed, teams: result.teams }
+		});
 	}
 </script>
 
 <svelte:head>
-	<title>{workspace.screen === 'players' ? 'Players' : 'Team setup'} · QTeam</title>
+	<title
+		>{workspace.screen === 'players'
+			? 'Players'
+			: workspace.screen === 'setup'
+				? 'Team setup'
+				: 'Teams'} · QTeam</title
+	>
 	<meta
 		name="description"
 		content="Add or import outfield football players and their eligible positions."
@@ -76,8 +110,10 @@
 	<WorkflowNav
 		screen={workspace.screen}
 		canOpenSetup={rosterReady}
+		canOpenTeams={Boolean(workspace.generated)}
 		onPlayers={openPlayers}
 		onSetup={openSetup}
+		onTeams={openTeams}
 	/>
 
 	{#if storageMessage}
@@ -123,11 +159,18 @@
 			onStartOver={startOver}
 			onContinue={openSetup}
 		/>
-	{:else}
+	{:else if workspace.screen === 'setup'}
 		<TeamSetup
 			playerCount={workspace.roster.length}
 			teamCount={workspace.teamCount}
 			onChoose={chooseTeamCount}
+			onGenerate={generate}
+		/>
+	{:else}
+		<GeneratedTeams
+			players={workspace.roster}
+			generated={workspace.generated!}
+			onGenerate={generate}
 		/>
 	{/if}
 </div>

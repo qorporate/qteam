@@ -1,7 +1,8 @@
 import { getRosterIssues, isPosition } from './players';
-import { isValidTeamCount } from './teams';
+import { getGenerationIssues, isValidTeamCount } from './teams';
 import type { Player } from './types/players.types';
 import type { StorageLike, Workspace } from './types/storage.types';
+import type { GeneratedResult, GeneratedTeam } from './types/teams.types';
 
 export const WORKSPACE_KEY = 'qteam.workspace.v1';
 
@@ -13,7 +14,7 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 	if (
 		!isRecord(value) ||
 		value.schemaVersion !== 1 ||
-		(value.screen !== 'players' && value.screen !== 'setup')
+		(value.screen !== 'players' && value.screen !== 'setup' && value.screen !== 'teams')
 	)
 		return null;
 	if (!Array.isArray(value.roster)) return null;
@@ -45,13 +46,18 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		(typeof teamCount !== 'number' || !isValidTeamCount(roster.length, teamCount))
 	)
 		return null;
-	if (value.screen === 'setup' && getRosterIssues(roster).length) return null;
+	if ((value.screen === 'setup' || value.screen === 'teams') && getRosterIssues(roster).length)
+		return null;
+	const generated = decodeGenerated(value.generated, roster, teamCount);
+	if (value.generated !== undefined && !generated) return null;
+	if (value.screen === 'teams' && !generated) return null;
 
 	return {
 		schemaVersion: 1,
 		screen: value.screen,
 		roster,
-		...(teamCount === undefined ? {} : { teamCount })
+		...(teamCount === undefined ? {} : { teamCount }),
+		...(generated ? { generated } : {})
 	};
 }
 
@@ -116,4 +122,46 @@ export function clearWorkspace(storage: StorageLike): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function decodeGenerated(
+	value: unknown,
+	roster: Player[],
+	teamCount: unknown
+): GeneratedResult | null {
+	if (value === undefined) return null;
+	if (
+		!isRecord(value) ||
+		typeof value.seed !== 'string' ||
+		!value.seed ||
+		!Array.isArray(value.teams)
+	) {
+		return null;
+	}
+	if (typeof teamCount !== 'number') return null;
+
+	const teams: GeneratedTeam[] = [];
+	for (const candidate of value.teams) {
+		if (
+			!isRecord(candidate) ||
+			typeof candidate.id !== 'string' ||
+			!Array.isArray(candidate.players)
+		) {
+			return null;
+		}
+
+		const players = candidate.players.map((assigned) => {
+			if (
+				!isRecord(assigned) ||
+				typeof assigned.playerId !== 'string' ||
+				typeof assigned.assignedPosition !== 'string'
+			)
+				return null;
+			return { playerId: assigned.playerId, assignedPosition: assigned.assignedPosition };
+		});
+		if (players.some((player) => player === null)) return null;
+		teams.push({ id: candidate.id, players: players as GeneratedTeam['players'] });
+	}
+
+	return getGenerationIssues(roster, teamCount, teams).length ? null : { seed: value.seed, teams };
 }

@@ -199,7 +199,8 @@ Every successful result satisfies:
 3. The requested number of teams is returned.
 4. Team sizes equal the calculated sizes.
 5. Team sizes differ by at most one.
-6. Every assigned position is eligible for that player.
+6. Every assigned position is eligible for that player, except a midfielder or forward may fill a
+   defender slot when the roster has too few defenders.
 7. Each displayed formation matches its assigned positions.
 
 Balance preferences may never violate these rules.
@@ -208,16 +209,21 @@ Balance preferences may never violate these rules.
 
 Start with the smallest deterministic heuristic that produces credible teams:
 
-1. Sort players by flexibility: one eligible position first, then two, then three.
-2. Use the seed to shuffle only equally constrained players and break ties.
-3. For each player, consider teams with remaining capacity and each eligible position.
-4. Prefer an option that fills a position missing from that team.
-5. Otherwise prefer the team with the lowest count for that position.
-6. Then prefer the least-full team.
-7. Derive formations and warnings from the finished assignments.
+1. Use these preferred formations for teams of four through ten outfield players:
 
-Do not add a formation catalogue, optimizer, weighted score, or improvement pass until named
-fixtures demonstrate a real weakness in this algorithm.
+   ```text
+   4: 1-2-1  5: 2-2-1  6: 2-2-2  7: 3-2-2
+   8: 3-3-2  9: 3-3-3  10: 4-3-3
+   ```
+
+2. Fill each team's defender slots first. Use eligible defenders, then midfielders, then forwards.
+3. Sort the remaining players by flexibility: one eligible position first, then two, then three.
+4. Use the seed to shuffle only equally constrained players and break ties.
+5. Prefer the remaining formation position with the largest gap, then the least-full team.
+6. Derive formations and warnings from the finished assignments.
+
+Do not add an optimizer, weighted score, or improvement pass until named fixtures demonstrate a
+real weakness in this algorithm.
 
 Generation is the best available positional balance, not a mathematical optimum.
 

@@ -4,11 +4,13 @@
 	let {
 		playerCount,
 		teamCount,
-		onChoose
+		onChoose,
+		onGenerate
 	}: {
 		playerCount: number;
 		teamCount?: number;
 		onChoose: (teamCount: number) => void;
+		onGenerate: () => void;
 	} = $props();
 
 	const validTeamCounts = $derived(getValidTeamCounts(playerCount));
@@ -49,9 +51,14 @@
 		</fieldset>
 
 		{#if teamCount}
-			<p class="text-sm/5 text-(--color-muted)" aria-live="polite">
-				Saved. Team generation is the next step.
-			</p>
+			<div class="flex flex-wrap items-center gap-3">
+				<p class="text-sm/5 text-(--color-muted)" aria-live="polite">Saved.</p>
+				<button
+					class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+					type="button"
+					onclick={onGenerate}>Generate teams</button
+				>
+			</div>
 		{/if}
 	</section>
 </div>
