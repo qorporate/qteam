@@ -28,6 +28,8 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		if (typeof candidate.name !== 'string' || !Array.isArray(candidate.eligiblePositions)) {
 			return null;
 		}
+		const checkedIn = candidate.checkedIn;
+		if (checkedIn !== undefined && typeof checkedIn !== 'boolean') return null;
 		if (!candidate.eligiblePositions.every(isPosition)) return null;
 		if (new Set(candidate.eligiblePositions).size !== candidate.eligiblePositions.length)
 			return null;
@@ -36,7 +38,8 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		roster.push({
 			id: candidate.id,
 			name: candidate.name,
-			eligiblePositions: [...candidate.eligiblePositions]
+			eligiblePositions: [...candidate.eligiblePositions],
+			...(checkedIn === undefined ? {} : { checkedIn })
 		});
 	}
 

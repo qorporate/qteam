@@ -102,7 +102,8 @@ export function createPlayer(draft: PlayerDraft, id: string = crypto.randomUUID(
 	return {
 		id,
 		name: draft.name.trim(),
-		eligiblePositions: POSITIONS.filter((position) => draft.eligiblePositions.includes(position))
+		eligiblePositions: POSITIONS.filter((position) => draft.eligiblePositions.includes(position)),
+		checkedIn: false
 	};
 }
 

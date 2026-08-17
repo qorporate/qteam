@@ -65,7 +65,8 @@ describe('player helpers', () => {
 		expect(player).toEqual({
 			id: 'player-1',
 			name: 'Femi',
-			eligiblePositions: ['DEFENDER', 'FORWARD']
+			eligiblePositions: ['DEFENDER', 'FORWARD'],
+			checkedIn: false
 		});
 		expect(togglePosition(player.eligiblePositions, 'DEFENDER')).toEqual(['FORWARD']);
 		expect(togglePosition(['FORWARD'], 'MIDFIELDER')).toEqual(['MIDFIELDER', 'FORWARD']);

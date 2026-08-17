@@ -174,8 +174,25 @@
 											type="button"
 											aria-pressed={selected?.playerId === player.id}
 											onclick={() => selectPlayer(team, player.id)}
-											>{playerIndex + 1}. {player.name}</button
 										>
+											<span class="flex min-w-0 items-center gap-2">
+												<span>{playerIndex + 1}. {player.name}</span>
+												{#if player.checkedIn === true}
+													<svg
+														class="size-4 shrink-0 text-(--color-brand)"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														role="img"
+														aria-label="Checked in"
+													>
+														<circle cx="12" cy="12" r="9" />
+														<path d="m8 12 2.5 2.5L16 9" />
+													</svg>
+												{/if}
+											</span>
+										</button>
 									</li>
 								{/each}
 							</ul>

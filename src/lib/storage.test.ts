@@ -125,10 +125,26 @@ describe('workspace persistence', () => {
 		expect(loadWorkspace(storage)).toEqual({ workspace: teams });
 	});
 
+	it('round-trips check-in state and defaults older players to unchecked', () => {
+		const storage = new MemoryStorage();
+		const checkedIn: Workspace = {
+			...workspace,
+			roster: [{ ...workspace.roster[0], checkedIn: true }]
+		};
+
+		expect(saveWorkspace(storage, checkedIn)).toBe(true);
+		expect(loadWorkspace(storage)).toEqual({ workspace: checkedIn });
+		expect(decodeWorkspace(workspace)?.roster[0].checkedIn).toBeUndefined();
+	});
+
 	it.each([
 		{ ...workspace, schemaVersion: 2 },
 		{ ...workspace, screen: 'teams' },
 		{ ...workspace, teamCount: 2 },
+		{
+			...workspace,
+			roster: [{ ...workspace.roster[0], checkedIn: 'yes' }]
+		},
 		{ ...workspace, roster: [{ id: 'player-1', name: 'Femi', eligiblePositions: ['GOALKEEPER'] }] },
 		{
 			...workspace,

@@ -113,3 +113,50 @@ test('adds and edits a player, then starts over', async ({ page }) => {
 	await page.reload();
 	await expect(page.getByLabel('Player 1')).toHaveCount(0);
 });
+
+test('checks in players, prioritises them in the first two teams, and clears check-ins', async ({
+	page
+}) => {
+	await page.goto('./');
+	await page.getByRole('button', { name: 'Add players' }).click();
+	await page
+		.getByLabel('Player list')
+		.fill(Array.from({ length: 12 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
+	await page.getByRole('button', { name: /Add 12 imported players/ }).click();
+
+	const roster = page.locator('section[aria-labelledby="roster-heading"]').getByRole('listitem');
+	for (let index = 0; index < 8; index++) {
+		await roster
+			.nth(index)
+			.getByRole('button', { name: /^Check in/ })
+			.click();
+	}
+	await page.reload();
+	await expect(page.getByRole('button', { name: /^Uncheck/ })).toHaveCount(8);
+
+	await page.getByRole('button', { name: 'Choose teams' }).click();
+	await page.getByRole('button', { name: /3 teams.*4, 4, 4 players/ }).click();
+	await page.getByRole('button', { name: 'Generate teams' }).click();
+
+	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
+	const teamB = page.getByRole('heading', { name: 'Team B' }).locator('xpath=ancestor::section');
+	const teamC = page.getByRole('heading', { name: 'Team C' }).locator('xpath=ancestor::section');
+	const firstTwoText = `${await teamA.textContent()} ${await teamB.textContent()}`;
+	for (let index = 1; index <= 8; index++) {
+		expect(firstTwoText).toContain(`Player ${index}`);
+	}
+	for (let index = 1; index <= 8; index++) {
+		expect(await teamC.getByRole('button', { name: new RegExp(`Player ${index}$`) }).count()).toBe(
+			0
+		);
+	}
+	await expect(teamA.getByRole('img', { name: 'Checked in' })).toHaveCount(4);
+	await expect(teamB.getByRole('img', { name: 'Checked in' })).toHaveCount(4);
+	await expect(teamC.getByRole('img', { name: 'Checked in' })).toHaveCount(0);
+
+	await page.getByRole('button', { name: 'Players', exact: true }).click();
+	page.once('dialog', (dialog) => dialog.accept());
+	await page.getByRole('button', { name: 'Clear check-ins' }).click();
+	await expect(page.getByRole('button', { name: /^Uncheck/ })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Teams', exact: true })).toBeDisabled();
+});

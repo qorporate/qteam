@@ -68,14 +68,22 @@ export function generateTeams({
 		id: `team-${index + 1}`,
 		players: []
 	}));
+	const hasCheckedIn = players.some((player) => player.checkedIn === true);
+	const checkedInIds = new Set(
+		players.filter((player) => player.checkedIn === true).map((player) => player.id)
+	);
 	const unassigned = shuffle([...players], random).sort(
-		(left, right) => left.eligiblePositions.length - right.eligiblePositions.length
+		(left, right) =>
+			(hasCheckedIn ? Number(right.checkedIn === true) - Number(left.checkedIn === true) : 0) ||
+			left.eligiblePositions.length - right.eligiblePositions.length
 	);
 
 	for (let defender = 0; defender < 4; defender++) {
 		for (const [index, team] of teams.entries()) {
 			if (team.players.length >= preferredFormations[capacities[index]].DEFENDER) continue;
-			const player = unassigned.sort(defenderPriority)[0];
+			const player = hasCheckedIn
+				? chooseDefender(unassigned, teams, capacities, index)
+				: unassigned.sort(defenderPriority)[0];
 			if (!player) continue;
 			team.players.push({ playerId: player.id, assignedPosition: 'DEFENDER' });
 			unassigned.splice(unassigned.indexOf(player), 1);
@@ -89,6 +97,8 @@ export function generateTeams({
 			return player.eligiblePositions.map((position) => ({
 				team,
 				position,
+				firstGame: teamIndex < 2,
+				checkedInCount: team.players.filter(({ playerId }) => checkedInIds.has(playerId)).length,
 				positionDeficit:
 					preferredFormations[capacities[teamIndex]][position] -
 					team.players.filter((assigned) => assigned.assignedPosition === position).length,
@@ -99,6 +109,10 @@ export function generateTeams({
 
 		candidates.sort(
 			(left, right) =>
+				(hasCheckedIn && player.checkedIn === true
+					? Number(right.firstGame) - Number(left.firstGame) ||
+						left.checkedInCount - right.checkedInCount
+					: 0) ||
 				Number(left.positionDeficit <= 0) - Number(right.positionDeficit <= 0) ||
 				right.positionDeficit - left.positionDeficit ||
 				left.fullness - right.fullness ||
@@ -232,6 +246,23 @@ function defenderPriority(left: Player, right: Player): number {
 		defenderFallbackCost(left) - defenderFallbackCost(right) ||
 		left.eligiblePositions.length - right.eligiblePositions.length
 	);
+}
+
+function chooseDefender(
+	unassigned: Player[],
+	teams: GeneratedTeam[],
+	capacities: number[],
+	teamIndex: number
+): Player | undefined {
+	const checkedIn = unassigned.filter((player) => player.checkedIn === true);
+	const unchecked = unassigned.filter((player) => player.checkedIn !== true);
+	const firstGameSlots = capacities
+		.slice(0, 2)
+		.reduce((remaining, capacity, index) => remaining + capacity - teams[index].players.length, 0);
+	const useCheckedIn = teamIndex < 2 || checkedIn.length > firstGameSlots;
+	const candidates = useCheckedIn ? checkedIn : unchecked.length ? unchecked : checkedIn;
+
+	return candidates.sort(defenderPriority)[0];
 }
 
 function defenderFallbackCost(player: Player): number {

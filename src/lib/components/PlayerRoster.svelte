@@ -5,12 +5,16 @@
 	let {
 		players,
 		onUpdate,
+		onCheckIn,
+		onClearCheckIns,
 		onRemove,
 		onStartOver,
 		onContinue
 	}: {
 		players: Player[];
 		onUpdate: (id: string, update: PlayerUpdate) => void;
+		onCheckIn: (id: string) => void;
+		onClearCheckIns: () => void;
 		onRemove: (id: string) => void;
 		onStartOver: () => void;
 		onContinue: () => void;
@@ -33,13 +37,22 @@
 				>{players.length}</span
 			>
 		</div>
-		{#if players.length}
-			<button
-				class="min-h-11 rounded-lg px-3 py-2 text-sm/5 font-medium text-(--color-danger) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger)"
-				type="button"
-				onclick={onStartOver}>Start over</button
-			>
-		{/if}
+		<div class="flex flex-wrap gap-2">
+			{#if players.some((player) => player.checkedIn === true)}
+				<button
+					class="min-h-11 rounded-lg px-3 py-2 text-sm/5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+					type="button"
+					onclick={onClearCheckIns}>Clear check-ins</button
+				>
+			{/if}
+			{#if players.length}
+				<button
+					class="min-h-11 rounded-lg px-3 py-2 text-sm/5 font-medium text-(--color-danger) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger)"
+					type="button"
+					onclick={onStartOver}>Start over</button
+				>
+			{/if}
+		</div>
 	</header>
 
 	{#if players.length === 0}
@@ -62,7 +75,7 @@
 						/>
 					</label>
 
-					<div class="flex items-center gap-2">
+					<div class="flex flex-wrap items-center gap-2">
 						<fieldset class="min-w-0 flex-1">
 							<legend class="sr-only">Positions</legend>
 							<div class="flex flex-wrap gap-2">
@@ -83,7 +96,20 @@
 								{/each}
 							</div>
 						</fieldset>
-						<span class="h-8 w-px bg-black/15" aria-hidden="true"></span>
+						<button
+							class={[
+								'min-h-11 rounded-lg border px-3 py-2 text-sm/5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)',
+								player.checkedIn === true
+									? 'border-(--color-brand) bg-(--color-brand-soft)'
+									: 'border-black/10 bg-(--color-surface)'
+							]}
+							type="button"
+							aria-label={`${player.checkedIn === true ? 'Uncheck' : 'Check in'} ${player.name || `player ${index + 1}`}`}
+							aria-pressed={player.checkedIn === true}
+							onclick={() => onCheckIn(player.id)}
+						>
+							{player.checkedIn === true ? 'Checked in' : 'Check in'}
+						</button>
 						<button
 							class="grid size-11 shrink-0 place-items-center rounded-lg text-(--color-danger) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger)"
 							type="button"

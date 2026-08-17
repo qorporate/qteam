@@ -68,6 +68,48 @@ describe('team generation', () => {
 		expect(roster).toEqual(before);
 	});
 
+	it('prioritises checked-in players in the first two teams', () => {
+		const players: Player[] = Array.from({ length: 12 }, (_, index) => ({
+			id: `player-${index}`,
+			name: `Player ${index + 1}`,
+			eligiblePositions: ['MIDFIELDER'],
+			checkedIn: index < 8
+		}));
+		const result = generateTeams({ players, teamCount: 3, seed: 'check-ins' });
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		const firstTwo = result.teams.slice(0, 2).flatMap((team) => team.players);
+		expect(firstTwo).toHaveLength(8);
+		expect(firstTwo.every(({ playerId }) => Number(playerId.split('-')[1]) < 8)).toBe(true);
+		expect(
+			result.teams
+				.slice(0, 2)
+				.map((team) => team.players.filter(({ playerId }) => Number(playerId.split('-')[1]) < 8))
+				.map((checkedIn) => checkedIn.length)
+		).toEqual([4, 4]);
+	});
+
+	it('puts checked-in overflow in later teams', () => {
+		const players: Player[] = Array.from({ length: 12 }, (_, index) => ({
+			id: `player-${index}`,
+			name: `Player ${index + 1}`,
+			eligiblePositions: ['MIDFIELDER'],
+			checkedIn: index < 9
+		}));
+		const result = generateTeams({ players, teamCount: 3, seed: 'check-in-overflow' });
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		const checkedIn = (playerId: string) =>
+			players.find((player) => player.id === playerId)?.checkedIn;
+		expect(
+			result.teams.map((team) => team.players.filter(({ playerId }) => checkedIn(playerId)).length)
+		).toEqual([4, 4, 1]);
+	});
+
 	it('uses midfielders before forwards to fill missing defender slots', () => {
 		const players: Player[] = [
 			...Array.from({ length: 2 }, (_, index): Player => ({

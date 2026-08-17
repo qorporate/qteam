@@ -42,6 +42,33 @@
 		);
 	}
 
+	function updateCheckIn(id: string) {
+		if (workspace.generated && !confirm('Changing check-ins discards generated teams. Continue?'))
+			return;
+
+		saveWorkspaceState({
+			...workspace,
+			screen: 'players',
+			generated: undefined,
+			roster: workspace.roster.map((player) =>
+				player.id === id ? { ...player, checkedIn: player.checkedIn !== true } : player
+			)
+		});
+	}
+
+	function clearCheckIns() {
+		if (!workspace.roster.some((player) => player.checkedIn === true)) return;
+		if (workspace.generated && !confirm('Changing check-ins discards generated teams. Continue?'))
+			return;
+
+		saveWorkspaceState({
+			...workspace,
+			screen: 'players',
+			generated: undefined,
+			roster: workspace.roster.map((player) => ({ ...player, checkedIn: false }))
+		});
+	}
+
 	function startOver() {
 		if (!confirm('Start over? This removes every player from the roster.')) return;
 		if (!clearWorkspace(localStorage)) {
@@ -161,6 +188,8 @@
 		<PlayerRoster
 			players={workspace.roster}
 			onUpdate={updatePlayer}
+			onCheckIn={updateCheckIn}
+			onClearCheckIns={clearCheckIns}
 			onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
 			onStartOver={startOver}
 			onContinue={openSetup}

@@ -4,9 +4,10 @@ export type Player = {
 	id: string;
 	name: string;
 	eligiblePositions: Position[];
+	checkedIn?: boolean;
 };
 
-export type PlayerDraft = Omit<Player, 'id'>;
+export type PlayerDraft = Omit<Player, 'id' | 'checkedIn'>;
 
 export type PlayerUpdate = Partial<Pick<Player, 'name' | 'eligiblePositions'>>;
 

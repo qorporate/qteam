@@ -7,6 +7,7 @@ QTeam turns a list of outfield football players into positionally balanced teams
 The user controls:
 
 - the players and their eligible positions;
+- which players have checked in for the current game;
 - the number of teams;
 - manual one-for-one swaps after generation.
 
@@ -38,15 +39,16 @@ makes direct reloads reliable beneath the repository base path.
 ## 3. User flow
 
 ```text
-Players -> Team setup -> Teams
+Players (optional check-in) -> Team setup -> Teams
 ```
 
 1. Add or import players.
 2. Review the roster.
-3. Choose a valid team count.
-4. Generate teams.
-5. Optionally swap players.
-6. Copy or share the result.
+3. Check in players who have arrived.
+4. Choose a valid team count.
+5. Generate teams.
+6. Optionally swap players.
+7. Copy or share the result.
 
 Later screens are unavailable until their input is valid.
 
@@ -135,6 +137,16 @@ Eight is the minimum for two teams of four.
 Changing the roster after generation requires confirmation and then discards the generated result.
 Never show teams that do not match the current roster.
 
+### 4.4 Check-in
+
+Each player has a check-in toggle. New and imported players start unchecked. Check-in state is
+stored with the player, survives reloads, and can be cleared for the whole roster with Clear
+check-ins.
+
+Changing check-in state after generation requires confirmation and discards the generated result.
+Generated team rows show a check-in icon for checked-in players. Check-in state is not included in
+copied or shared team output.
+
 ## 5. Team setup
 
 The user chooses only the number of teams.
@@ -217,10 +229,14 @@ Start with the smallest deterministic heuristic that produces credible teams:
    ```
 
 2. Fill each team's defender slots first. Use eligible defenders, then midfielders, then forwards.
-3. Sort the remaining players by flexibility: one eligible position first, then two, then three.
-4. Use the seed to shuffle only equally constrained players and break ties.
-5. Prefer the remaining formation position with the largest gap, then the least-full team.
-6. Derive formations and warnings from the finished assignments.
+3. Prioritise checked-in players in the first two teams, Team A and Team B. Keep the first two
+   teams positionally balanced and spread checked-in players between them where possible.
+4. If more players are checked in than the capacity of the first two teams, place the excess in
+   later teams.
+5. Sort the remaining players by flexibility: one eligible position first, then two, then three.
+6. Use the seed to shuffle only equally constrained players and break ties.
+7. Prefer the remaining formation position with the largest gap, then the least-full team.
+8. Derive formations and warnings from the finished assignments.
 
 Do not add an optimizer, weighted score, or improvement pass until named fixtures demonstrate a
 real weakness in this algorithm.
@@ -308,6 +324,7 @@ type Player = {
   id: string;
   name: string;
   eligiblePositions: Position[];
+  checkedIn?: boolean;
 };
 
 type AssignedPlayer = {
@@ -354,6 +371,7 @@ Rules:
 - Treat storage as untrusted input.
 - Ignore malformed or unsupported data safely and explain the reset.
 - Save after state-changing actions.
+- Missing check-in fields in older saved players mean unchecked; no schema migration is needed.
 - Catch storage errors without crashing the application.
 - Do not persist open menus, messages, selections, import text, formations, or warnings.
 - Start over clears the workspace after confirmation.
@@ -423,7 +441,7 @@ Generator:
 - cover all seven non-empty eligible-position combinations;
 - confirm identical input and seed returns an identical result;
 - confirm inputs are not mutated;
-- include fixtures for scarce defenders, unequal sizes, and flexible players.
+- include fixtures for scarce defenders, unequal sizes, flexible players, and checked-in players.
 
 Swaps:
 
@@ -435,6 +453,7 @@ Swaps:
 Persistence:
 
 - valid workspace round-trip;
+- checked-in players round-trip and older players default to unchecked;
 - invalid JSON and invalid fields are rejected safely;
 - storage failures leave in-memory state usable;
 - browser storage is not read during the static build.
@@ -453,6 +472,7 @@ Keep the Playwright suite small:
 1. Import a mixed-validity Qball list, correct it, choose teams, generate, copy, and reload.
 2. Add eight players manually, generate, swap two players, and start over.
 3. Load the production build beneath `/qteam` and complete the primary flow.
+4. Check in players, reload, generate, clear check-ins, and confirm regeneration is required.
 
 Test behaviour and invariants, not implementation details or large snapshots. Add a regression
 test before fixing a reported bug.
@@ -525,6 +545,16 @@ Done after mobile and desktop tap flows preserve all hard rules.
 
 Done after copied output is readable in WhatsApp and the complete flow works on a real mobile
 browser.
+
+### Version 6: Check-ins
+
+- per-player check-in toggles and Clear check-ins
+- persisted check-in state
+- checked-in priority for the first two generated teams
+- regeneration confirmation when check-ins change after generation
+
+Done when checked-in players are maximised in Team A and Team B without breaking existing team
+size, position, persistence, and sharing rules.
 
 ## 13. Definition of done
 
