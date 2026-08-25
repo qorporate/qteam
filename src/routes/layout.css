@@ -4,15 +4,22 @@
 	color-scheme: light;
 	--color-brand: #4caf50;
 	--color-brand-soft: rgb(76 175 80 / 12%);
+	--color-brand-faint: rgb(76 175 80 / 8%);
 	--color-ink: #171717;
-	--color-muted: #757575;
+	--color-muted: #666;
 	--color-disabled: #ccc;
 	--color-canvas: #f7f7f7;
 	--color-surface-muted: #f5f5f5;
+	--color-surface-strong: #f0f0f0;
 	--color-surface: #fff;
 	--color-warning-soft: rgb(255 139 37 / 12%);
 	--color-danger: #d32f2f;
 	--color-danger-soft: rgb(211 47 47 / 10%);
+}
+
+html {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 body {

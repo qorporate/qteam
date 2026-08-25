@@ -24,7 +24,7 @@
 		<li>
 			<button
 				class={[
-					'flex min-h-11 items-center border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)',
+					'flex min-h-11 items-center border-b-2 px-2 text-sm font-medium transition-[color,transform] duration-150 ease-out hover:text-(--color-brand) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
 					screen === 'players' ? 'border-(--color-brand)' : 'border-transparent'
 				]}
 				type="button"
@@ -35,7 +35,7 @@
 		<li>
 			<button
 				class={[
-					'flex min-h-11 items-center border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand) disabled:cursor-not-allowed disabled:text-(--color-disabled)',
+					'flex min-h-11 items-center border-b-2 px-2 text-sm font-medium transition-[color,transform] duration-150 ease-out hover:text-(--color-brand) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:text-(--color-disabled) disabled:hover:text-(--color-disabled) disabled:active:scale-100 motion-reduce:active:scale-100',
 					screen === 'setup' ? 'border-(--color-brand)' : 'border-transparent'
 				]}
 				type="button"
@@ -47,7 +47,7 @@
 		<li>
 			<button
 				class={[
-					'flex min-h-11 items-center border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand) disabled:cursor-not-allowed disabled:text-(--color-disabled)',
+					'flex min-h-11 items-center border-b-2 px-2 text-sm font-medium transition-[color,transform] duration-150 ease-out hover:text-(--color-brand) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:text-(--color-disabled) disabled:hover:text-(--color-disabled) disabled:active:scale-100 motion-reduce:active:scale-100',
 					screen === 'teams' ? 'border-(--color-brand)' : 'border-transparent'
 				]}
 				type="button"

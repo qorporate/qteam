@@ -87,31 +87,35 @@
 <div class="flex flex-col gap-6">
 	<header class="flex flex-wrap items-end justify-between gap-4">
 		<div class="flex flex-col gap-2">
-			<h1 class="text-2xl/8 font-medium">Generated teams</h1>
-			<p class="text-base/6 text-(--color-muted)">Every player has been assigned once.</p>
+			<h1 class="text-2xl/8 font-medium text-balance">Generated teams</h1>
+			<p class="text-base/6 text-pretty text-(--color-muted)">
+				Every player has been assigned once.
+			</p>
 		</div>
 		<div class="flex flex-wrap gap-2">
 			<button
-				class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+				class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
 				type="button"
 				onclick={() => copy(formatTeams(players, generated.teams), 'All teams')}>Copy all</button
 			>
 			{#if canShare}
 				<button
-					class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+					class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
 					type="button"
 					onclick={share}>Share</button
 				>
 			{/if}
 			<button
-				class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+				class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
 				type="button"
 				onclick={onGenerate}>Generate another</button
 			>
 		</div>
 	</header>
 
-	<p class="text-sm/5 text-(--color-muted)">Tap two players from different teams to swap them.</p>
+	<p class="text-sm/5 text-pretty text-(--color-muted)">
+		Select two players from different teams to swap them.
+	</p>
 	{#if message}
 		<p class="text-sm/5" aria-live="polite">{message}</p>
 	{/if}
@@ -138,7 +142,9 @@
 			>
 				<header class="flex items-start justify-between gap-3">
 					<div class="flex flex-col gap-1">
-						<h2 id={`team-${team.id}`} class="text-xl/6 font-medium">Team {teamName(index)}</h2>
+						<h2 id={`team-${team.id}`} class="text-xl/6 font-medium text-balance">
+							Team {teamName(index)}
+						</h2>
 						<p class="text-sm/5 text-(--color-muted)">{formatFormation(team)}</p>
 					</div>
 					<div class="flex items-center gap-2">
@@ -147,7 +153,7 @@
 							>{team.players.length}</span
 						>
 						<button
-							class="min-h-11 rounded-lg bg-(--color-surface-muted) px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)"
+							class="min-h-11 rounded-lg bg-(--color-surface-muted) px-3 text-sm font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
 							type="button"
 							aria-label={`Copy Team ${teamName(index)}`}
 							onclick={() => copy(formatTeam(players, team, index), `Team ${teamName(index)}`)}
@@ -166,10 +172,10 @@
 									<li>
 										<button
 											class={[
-												'flex min-h-11 w-full items-center rounded-lg px-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-brand)',
+												'flex min-h-11 w-full items-center rounded-lg px-2 text-left transition-[background-color,color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
 												selected?.playerId === player.id
-													? 'bg-(--color-brand-soft) text-(--color-ink)'
-													: 'bg-(--color-surface-muted)'
+													? 'bg-(--color-brand-soft) text-(--color-ink) hover:bg-(--color-brand-faint)'
+													: 'bg-(--color-surface-muted) hover:bg-(--color-surface-strong)'
 											]}
 											type="button"
 											aria-pressed={selected?.playerId === player.id}

@@ -29,7 +29,7 @@ Use green for progress, positive actions, and selected states. Use black for hig
 | `--color-brand-faint` | `rgb(76 175 80 / 8%)` | Low-emphasis highlights |
 | `--color-ink` | `#171717` | Default text and icons |
 | `--color-black` | `#000000` | Highest-emphasis surfaces and actions |
-| `--color-muted` | `#757575` | Secondary text |
+| `--color-muted` | `#666666` | Secondary text that remains readable on light surfaces |
 | `--color-subtle` | `#A5A5A5` | Nonessential metadata and inactive decoration |
 | `--color-disabled` | `#CCCCCC` | Disabled content |
 | `--color-canvas` | `#F7F7F7` | App background |
@@ -159,7 +159,7 @@ These controls are shared UI primitives, not QSet product components.
 - Surface: white or surface muted.
 - Border: `1px` neutral border.
 - Radius: `8px`.
-- Focus uses a visible brand ring.
+- Focus uses a visible, contrast-safe ring; pair the brand ring with an ink outline when needed.
 - Put help and validation text directly beneath the field.
 - Explain how to fix an error, not only that one occurred.
 
@@ -232,7 +232,7 @@ Use `120–180ms` transitions for color, opacity, and small transforms. Avoid an
   --color-brand-faint: rgb(76 175 80 / 8%);
   --color-ink: #171717;
   --color-black: #000;
-  --color-muted: #757575;
+  --color-muted: #666;
   --color-subtle: #a5a5a5;
   --color-disabled: #ccc;
   --color-canvas: #f7f7f7;

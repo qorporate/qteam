@@ -160,3 +160,23 @@ test('checks in players, prioritises them in the first two teams, and clears che
 	await expect(page.getByRole('button', { name: /^Uncheck/ })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Teams', exact: true })).toBeDisabled();
 });
+
+test('keeps a generated roster edit unchanged when confirmation is cancelled', async ({ page }) => {
+	await page.goto('./');
+	await page.getByRole('button', { name: 'Add players' }).click();
+	await page
+		.getByLabel('Player list')
+		.fill(Array.from({ length: 8 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
+	await page.getByRole('button', { name: /Add 8 imported players/ }).click();
+	await page.getByRole('button', { name: 'Choose teams' }).click();
+	await page.getByRole('button', { name: /2 teams.*4, 4 players/ }).click();
+	await page.getByRole('button', { name: 'Generate teams' }).click();
+	await page.getByRole('button', { name: 'Players', exact: true }).click();
+
+	const player = page.getByRole('textbox', { name: 'Player 1' });
+	page.once('dialog', (dialog) => dialog.dismiss());
+	await player.fill('Changed name');
+
+	await expect(player).toHaveValue('Player 1');
+	await expect(page.getByRole('button', { name: 'Teams', exact: true })).toBeEnabled();
+});

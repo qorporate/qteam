@@ -25,8 +25,9 @@
 
 	function commitRoster(roster: Player[]) {
 		if (workspace.generated && !confirm('Changing the roster discards generated teams. Continue?'))
-			return;
+			return false;
 		saveWorkspaceState({ schemaVersion: 1, screen: 'players', roster });
+		return true;
 	}
 
 	function saveWorkspaceState(next: Workspace) {
@@ -36,8 +37,11 @@
 		}
 	}
 
-	function updatePlayer(id: string, update: Partial<Pick<Player, 'name' | 'eligiblePositions'>>) {
-		commitRoster(
+	function updatePlayer(
+		id: string,
+		update: Partial<Pick<Player, 'name' | 'eligiblePositions'>>
+	): boolean {
+		return commitRoster(
 			workspace.roster.map((player) => (player.id === id ? { ...player, ...update } : player))
 		);
 	}
@@ -156,7 +160,7 @@
 		>
 			<p>{storageMessage}</p>
 			<button
-				class="min-h-11 shrink-0 rounded-lg px-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger)"
+				class="min-h-11 shrink-0 rounded-lg px-3 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
 				type="button"
 				onclick={() => (storageMessage = '')}>Dismiss</button
 			>
@@ -165,8 +169,8 @@
 
 	{#if workspace.screen === 'players'}
 		<header class="flex flex-col gap-2">
-			<h1 class="text-2xl/8 font-medium">Build your player list</h1>
-			<p class="text-base/6 text-(--color-muted)">
+			<h1 class="text-2xl/8 font-medium text-balance">Build your player list</h1>
+			<p class="text-base/6 text-pretty text-(--color-muted)">
 				Add players and the positions they can play. QTeam will use them to create balanced teams.
 			</p>
 		</header>
