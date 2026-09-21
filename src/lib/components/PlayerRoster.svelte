@@ -8,7 +8,6 @@
 		onCheckIn,
 		onClearCheckIns,
 		onRemove,
-		onStartOver,
 		onContinue
 	}: {
 		players: Player[];
@@ -16,7 +15,6 @@
 		onCheckIn: (id: string) => void;
 		onClearCheckIns: () => void;
 		onRemove: (id: string) => void;
-		onStartOver: () => void;
 		onContinue: () => void;
 	} = $props();
 
@@ -30,30 +28,14 @@
 </script>
 
 <section class="flex flex-col gap-5" aria-labelledby="roster-heading">
-	<header class="flex flex-wrap items-center justify-between gap-3">
-		<div class="flex items-center gap-3">
-			<h2 id="roster-heading" class="text-xl/6 font-medium text-balance">Roster</h2>
-			<span class="rounded-full bg-(--color-brand-soft) px-2 py-1 text-xs/4 font-bold tabular-nums"
-				>{players.length}</span
-			>
-		</div>
-		<div class="flex flex-wrap gap-2">
-			{#if players.some((player) => player.checkedIn === true)}
-				<button
-					class="min-h-11 rounded-lg px-3 py-2 text-sm/5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-					type="button"
-					onclick={onClearCheckIns}>Clear check-ins</button
-				>
-			{/if}
-			{#if players.length}
-				<button
-					class="min-h-11 rounded-lg px-3 py-2 text-sm/5 font-medium text-(--color-danger) transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
-					type="button"
-					onclick={onStartOver}>Start over</button
-				>
-			{/if}
-		</div>
-	</header>
+	<h2 id="roster-heading" class="sr-only">Roster</h2>
+	{#if players.some((player) => player.checkedIn === true)}
+		<button
+			class="min-h-11 self-end rounded-lg px-3 py-2 text-sm/5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
+			type="button"
+			onclick={onClearCheckIns}>Clear check-ins</button
+		>
+	{/if}
 
 	{#if players.length === 0}
 		<div class="flex flex-col gap-2 rounded-2xl bg-(--color-surface) p-6">
@@ -63,14 +45,13 @@
 			</p>
 		</div>
 	{:else}
-		<ul class="flex flex-col gap-2">
+		<ul class="grid grid-cols-2 gap-3 sm:gap-4">
 			{#each players as player, index (player.id)}
-				<li class="flex flex-col gap-2 rounded-xl bg-(--color-surface) p-3">
-					<label class="flex flex-col gap-1">
-						<span class="text-sm/5 font-bold">Player {index + 1}</span>
+				<li class="flex min-w-0 flex-col gap-4 rounded-2xl bg-(--color-surface) p-3 sm:p-4">
+					<label>
+						<span class="sr-only">Player {index + 1}</span>
 						<input
-							class="min-h-11 rounded-lg border border-black/10 bg-(--color-surface-muted) px-3 py-2.5 text-base/6 transition-[border-color,box-shadow] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
-							class:border-(--color-danger)={!player.name.trim()}
+							class="w-full rounded-lg bg-transparent px-1 py-1 text-lg/6 font-medium transition-[background-color] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
 							value={player.name}
 							aria-invalid={!player.name.trim() ? 'true' : undefined}
 							aria-describedby={!player.name.trim() ? `player-${player.id}-error` : undefined}
@@ -81,64 +62,76 @@
 						/>
 					</label>
 
-					<div class="flex flex-wrap items-center gap-2">
+					<div class="flex flex-col gap-3">
 						<fieldset
-							class="min-w-0 flex-1"
+							class="min-w-0"
 							aria-describedby={player.eligiblePositions.length === 0
 								? `player-${player.id}-error`
 								: undefined}
 						>
 							<legend class="sr-only">Positions</legend>
-							<div class="flex flex-wrap gap-2">
+							<div class="flex gap-1">
 								{#each POSITIONS as position (position)}
 									<button
 										class={[
-											'min-h-11 shrink-0 rounded-lg border px-2 py-2 text-sm/5 font-medium transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
+											'grid size-8 shrink-0 place-items-center rounded-full border text-sm/5 font-medium transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
 											player.eligiblePositions.includes(position)
-												? 'border-(--color-brand) bg-(--color-brand-soft) hover:bg-(--color-brand-faint)'
+												? 'border-(--color-brand) bg-(--color-brand) text-(--color-ink) hover:bg-(--color-brand-soft)'
 												: 'border-black/10 bg-(--color-surface) hover:border-(--color-brand) hover:bg-(--color-surface-strong)'
 										]}
 										type="button"
+										aria-label={POSITION_LABELS[position]}
 										aria-pressed={player.eligiblePositions.includes(position)}
 										onclick={() => togglePlayerPosition(player, position)}
 									>
-										{POSITION_LABELS[position]}
+										{POSITION_LABELS[position].charAt(0)}
 									</button>
 								{/each}
 							</div>
 						</fieldset>
-						<button
-							class={[
-								'min-h-11 rounded-lg border px-3 py-2 text-sm/5 font-medium transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
-								player.checkedIn === true
-									? 'border-(--color-brand) bg-(--color-brand-soft) hover:bg-(--color-brand-faint)'
-									: 'border-black/10 bg-(--color-surface) hover:border-(--color-brand) hover:bg-(--color-surface-strong)'
-							]}
-							type="button"
-							aria-label={`${player.checkedIn === true ? 'Uncheck' : 'Check in'} ${player.name || `player ${index + 1}`}`}
-							aria-pressed={player.checkedIn === true}
-							onclick={() => onCheckIn(player.id)}
-						>
-							{player.checkedIn === true ? 'Checked in' : 'Check in'}
-						</button>
-						<button
-							class="grid size-11 shrink-0 place-items-center rounded-lg text-(--color-danger) transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
-							type="button"
-							aria-label={`Remove ${player.name || `player ${index + 1}`}`}
-							title="Remove player"
-							onclick={() => onRemove(player.id)}
-						>
-							<svg
-								class="size-5"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								aria-hidden="true"
+						<div class="grid grid-cols-2 gap-2">
+							<button
+								class={[
+									'grid min-h-12 place-items-center rounded-full border transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
+									player.checkedIn === true
+										? 'border-(--color-brand) bg-(--color-brand-soft) text-(--color-ink) hover:bg-(--color-brand-faint)'
+										: 'border-black/10 bg-(--color-surface) hover:border-(--color-brand) hover:bg-(--color-surface-strong)'
+								]}
+								type="button"
+								aria-label={`${player.checkedIn === true ? 'Uncheck' : 'Check in'} ${player.name || `player ${index + 1}`}`}
+								aria-pressed={player.checkedIn === true}
+								onclick={() => onCheckIn(player.id)}
 							>
-								<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
-							</svg>
-						</button>
+								<svg
+									class="size-5"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									aria-hidden="true"
+								>
+									<path d="m5 12 4 4L19 6" />
+								</svg>
+							</button>
+							<button
+								class="grid min-h-12 place-items-center rounded-full border border-black/10 text-(--color-danger) transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
+								type="button"
+								aria-label={`Remove ${player.name || `player ${index + 1}`}`}
+								title="Remove player"
+								onclick={() => onRemove(player.id)}
+							>
+								<svg
+									class="size-5"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									aria-hidden="true"
+								>
+									<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
+								</svg>
+							</button>
+						</div>
 					</div>
 
 					{#if !player.name.trim() || player.eligiblePositions.length === 0}

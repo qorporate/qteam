@@ -6,7 +6,7 @@
 	import TeamSetup from '$lib/components/TeamSetup.svelte';
 	import WorkflowNav from '$lib/components/WorkflowNav.svelte';
 	import { getRosterIssues } from '$lib/players';
-	import { clearWorkspace, emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
+	import { emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
 	import { generateTeams, isValidTeamCount } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
@@ -14,7 +14,6 @@
 
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
-	let formKey = $state(0);
 	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
 
 	onMount(() => {
@@ -71,17 +70,6 @@
 			generated: undefined,
 			roster: workspace.roster.map((player) => ({ ...player, checkedIn: false }))
 		});
-	}
-
-	function startOver() {
-		if (!confirm('Start over? This removes every player from the roster.')) return;
-		if (!clearWorkspace(localStorage)) {
-			storageMessage = 'The saved roster could not be cleared.';
-			return;
-		}
-
-		workspace = emptyWorkspace();
-		formKey++;
 	}
 
 	function openSetup() {
@@ -162,26 +150,7 @@
 		{/if}
 
 		{#if workspace.screen === 'players'}
-			<header class="flex flex-col gap-2">
-				<h1 class="text-2xl/8 font-medium text-balance">Build your player list</h1>
-				<p class="text-base/6 text-pretty text-(--color-muted)">
-					Add players and the positions they can play. QTeam will use them to create balanced teams.
-				</p>
-			</header>
-
-			<aside
-				class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
-				aria-label="Goalkeeper notice"
-			>
-				<p class="font-medium">Outfield players only</p>
-				<p class="text-(--color-muted)">
-					QTeam does not include goalkeepers. Add only outfield players.
-				</p>
-			</aside>
-
-			{#key formKey}
-				<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
-			{/key}
+			<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
 
 			<PlayerRoster
 				players={workspace.roster}
@@ -189,7 +158,6 @@
 				onCheckIn={updateCheckIn}
 				onClearCheckIns={clearCheckIns}
 				onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
-				onStartOver={startOver}
 				onContinue={openSetup}
 			/>
 		{:else if workspace.screen === 'setup'}

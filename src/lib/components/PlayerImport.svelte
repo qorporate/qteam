@@ -4,10 +4,12 @@
 
 	let {
 		onAdd,
-		onComplete
+		onComplete,
+		showHeader = true
 	}: {
 		onAdd: (players: Player[]) => void;
 		onComplete: () => void;
+		showHeader?: boolean;
 	} = $props();
 	let text = $state('');
 	let message = $state('');
@@ -26,12 +28,18 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<header class="flex flex-col gap-1">
-		<h3 class="text-xl/6 font-medium text-balance">Import players</h3>
+	{#if showHeader}
+		<header class="flex flex-col gap-1">
+			<h3 class="text-xl/6 font-medium text-balance">Import players</h3>
+			<p class="text-sm/5 text-pretty text-(--color-muted)">
+				Paste one player per line using <code>Name - Position</code>.
+			</p>
+		</header>
+	{:else}
 		<p class="text-sm/5 text-pretty text-(--color-muted)">
 			Paste one player per line using <code>Name - Position</code>.
 		</p>
-	</header>
+	{/if}
 
 	<label class="flex flex-col gap-2">
 		<span class="text-sm/5 font-bold">Player list</span>

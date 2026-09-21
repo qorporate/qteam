@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('generates teams and restores them after reload', async ({ page }) => {
 	await page.goto('./');
 	await expect(page.getByRole('button', { name: 'Team setup' })).toBeDisabled();
-	await page.getByRole('button', { name: 'Add players' }).click();
+	await page.getByRole('button', { name: 'Import players' }).click();
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 31 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
@@ -56,7 +56,7 @@ test('generates teams and restores them after reload', async ({ page }) => {
 
 test('imports valid players, keeps errors editable, and restores the roster', async ({ page }) => {
 	await page.goto('./');
-	await page.getByRole('button', { name: 'Add players' }).click();
+	await page.getByRole('button', { name: 'Import players' }).click();
 	await page
 		.getByLabel('Player list')
 		.fill(
@@ -82,8 +82,7 @@ test('imports valid players, keeps errors editable, and restores the roster', as
 
 test('adds and edits a player, then starts over', async ({ page }) => {
 	await page.goto('./');
-	await page.getByRole('button', { name: 'Add players' }).click();
-	await page.getByText('Add one manually', { exact: true }).click();
+	await page.getByRole('button', { name: 'Add manually' }).click();
 	const form = page.getByRole('form', { name: 'Add player manually' });
 
 	await form.getByRole('button', { name: 'Add player' }).click();
@@ -107,7 +106,7 @@ test('adds and edits a player, then starts over', async ({ page }) => {
 	);
 
 	page.once('dialog', (dialog) => dialog.accept());
-	await page.getByRole('button', { name: 'Start over' }).click();
+	await page.getByRole('button', { name: 'Reset' }).click();
 	await expect(page.getByText('Add or import players to build your roster.')).toBeVisible();
 
 	await page.reload();
@@ -118,7 +117,7 @@ test('checks in players, prioritises them in the first two teams, and clears che
 	page
 }) => {
 	await page.goto('./');
-	await page.getByRole('button', { name: 'Add players' }).click();
+	await page.getByRole('button', { name: 'Import players' }).click();
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 12 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
@@ -163,7 +162,7 @@ test('checks in players, prioritises them in the first two teams, and clears che
 
 test('keeps a generated roster edit unchanged when confirmation is cancelled', async ({ page }) => {
 	await page.goto('./');
-	await page.getByRole('button', { name: 'Add players' }).click();
+	await page.getByRole('button', { name: 'Import players' }).click();
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 8 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
