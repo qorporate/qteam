@@ -17,7 +17,7 @@
 </script>
 
 <nav
-	class="rounded-sm border-b border-black/10 bg-(--color-surface) px-2"
+	class="sticky bottom-0 z-10 shrink-0 border-t border-black/10 bg-(--color-surface) px-2 pb-[env(safe-area-inset-bottom)]"
 	aria-label="Team creation"
 >
 	<ol class="flex w-full justify-between">

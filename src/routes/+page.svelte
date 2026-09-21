@@ -143,7 +143,72 @@
 	/>
 </svelte:head>
 
-<div class="flex flex-col gap-8">
+<div class="flex h-full min-h-0 flex-col">
+	<div
+		class="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+	>
+		{#if storageMessage}
+			<div
+				class="flex items-start justify-between gap-4 rounded-xl bg-(--color-danger-soft) p-4 text-sm/5 text-(--color-danger)"
+				role="alert"
+			>
+				<p>{storageMessage}</p>
+				<button
+					class="min-h-11 shrink-0 rounded-lg px-3 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
+					type="button"
+					onclick={() => (storageMessage = '')}>Dismiss</button
+				>
+			</div>
+		{/if}
+
+		{#if workspace.screen === 'players'}
+			<header class="flex flex-col gap-2">
+				<h1 class="text-2xl/8 font-medium text-balance">Build your player list</h1>
+				<p class="text-base/6 text-pretty text-(--color-muted)">
+					Add players and the positions they can play. QTeam will use them to create balanced teams.
+				</p>
+			</header>
+
+			<aside
+				class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
+				aria-label="Goalkeeper notice"
+			>
+				<p class="font-medium">Outfield players only</p>
+				<p class="text-(--color-muted)">
+					QTeam does not include goalkeepers. Add only outfield players.
+				</p>
+			</aside>
+
+			{#key formKey}
+				<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+			{/key}
+
+			<PlayerRoster
+				players={workspace.roster}
+				onUpdate={updatePlayer}
+				onCheckIn={updateCheckIn}
+				onClearCheckIns={clearCheckIns}
+				onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
+				onStartOver={startOver}
+				onContinue={openSetup}
+			/>
+		{:else if workspace.screen === 'setup'}
+			<TeamSetup
+				playerCount={workspace.roster.length}
+				teamCount={workspace.teamCount}
+				onChoose={chooseTeamCount}
+				onGenerate={generate}
+			/>
+		{:else}
+			<GeneratedTeams
+				players={workspace.roster}
+				generated={workspace.generated!}
+				onGenerate={generate}
+				onSwap={saveSwap}
+			/>
+		{/if}
+	</div>
+
 	<WorkflowNav
 		screen={workspace.screen}
 		canOpenSetup={rosterReady}
@@ -152,65 +217,4 @@
 		onSetup={openSetup}
 		onTeams={openTeams}
 	/>
-
-	{#if storageMessage}
-		<div
-			class="flex items-start justify-between gap-4 rounded-xl bg-(--color-danger-soft) p-4 text-sm/5 text-(--color-danger)"
-			role="alert"
-		>
-			<p>{storageMessage}</p>
-			<button
-				class="min-h-11 shrink-0 rounded-lg px-3 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				onclick={() => (storageMessage = '')}>Dismiss</button
-			>
-		</div>
-	{/if}
-
-	{#if workspace.screen === 'players'}
-		<header class="flex flex-col gap-2">
-			<h1 class="text-2xl/8 font-medium text-balance">Build your player list</h1>
-			<p class="text-base/6 text-pretty text-(--color-muted)">
-				Add players and the positions they can play. QTeam will use them to create balanced teams.
-			</p>
-		</header>
-
-		<aside
-			class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
-			aria-label="Goalkeeper notice"
-		>
-			<p class="font-medium">Outfield players only</p>
-			<p class="text-(--color-muted)">
-				QTeam does not include goalkeepers. Add only outfield players.
-			</p>
-		</aside>
-
-		{#key formKey}
-			<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
-		{/key}
-
-		<PlayerRoster
-			players={workspace.roster}
-			onUpdate={updatePlayer}
-			onCheckIn={updateCheckIn}
-			onClearCheckIns={clearCheckIns}
-			onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
-			onStartOver={startOver}
-			onContinue={openSetup}
-		/>
-	{:else if workspace.screen === 'setup'}
-		<TeamSetup
-			playerCount={workspace.roster.length}
-			teamCount={workspace.teamCount}
-			onChoose={chooseTeamCount}
-			onGenerate={generate}
-		/>
-	{:else}
-		<GeneratedTeams
-			players={workspace.roster}
-			generated={workspace.generated!}
-			onGenerate={generate}
-			onSwap={saveSwap}
-		/>
-	{/if}
 </div>
