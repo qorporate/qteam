@@ -1,28 +1,20 @@
 <script lang="ts">
 	import { faCircleCheck, faTrashCan } from '@fortawesome/free-regular-svg-icons';
 	import Icon from '$lib/components/Icon.svelte';
-	import { POSITIONS, POSITION_LABELS, getRosterIssues, togglePosition } from '$lib/players';
+	import { POSITIONS, POSITION_LABELS, togglePosition } from '$lib/players';
 	import type { Player, PlayerUpdate, Position } from '$lib/types/players.types';
 
 	let {
 		players,
 		onUpdate,
 		onCheckIn,
-		onClearCheckIns,
-		onRemove,
-		onContinue
+		onRemove
 	}: {
 		players: Player[];
 		onUpdate: (id: string, update: PlayerUpdate) => boolean;
 		onCheckIn: (id: string) => void;
-		onClearCheckIns: () => void;
 		onRemove: (id: string) => void;
-		onContinue: () => void;
 	} = $props();
-
-	const issues = $derived(getRosterIssues(players));
-	const hasCheckIns = $derived(players.some((player) => player.checkedIn === true));
-	const canContinue = $derived(issues.length === 0);
 
 	function togglePlayerPosition(player: Player, position: Position) {
 		onUpdate(player.id, {
@@ -33,13 +25,33 @@
 
 <section class="flex flex-col gap-5" aria-labelledby="roster-heading">
 	<h2 id="roster-heading" class="sr-only">Roster</h2>
+	<p
+		class="text-center rounded-xl bg-(--color-surface) px-4 py-2 text-sm/5 font-medium tabular-nums w-full"
+	>
+		{players.length}
+		{players.length === 1 ? 'player' : 'players'}
+	</p>
 
 	{#if players.length === 0}
-		<div class="flex flex-col gap-2 rounded-2xl bg-(--color-surface) p-6">
-			<p class="text-[40px]/11 font-medium tabular-nums">0</p>
-			<p class="text-base/6 text-pretty text-(--color-muted)">
-				Add or import players to build your roster.
-			</p>
+		<div
+			class="flex flex-col items-center gap-5 rounded-2xl bg-(--color-surface) p-6 py-10 text-center"
+		>
+			<div class="flex flex-col gap-2">
+				<h2 class="text-xl/6 font-medium">How To Use</h2>
+				<p class="text-(--color-muted)">Add players to get started.</p>
+			</div>
+			<dl class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 text-left">
+				<dt class="font-medium">D</dt>
+				<dd>Defender</dd>
+				<dt class="font-medium">M</dt>
+				<dd>Midfielder</dd>
+				<dt class="font-medium">F</dt>
+				<dd>Forward</dd>
+				<dt><Icon icon={faCircleCheck} size={16} /></dt>
+				<dd>Check In</dd>
+				<dt class="text-(--color-danger)"><Icon icon={faTrashCan} size={16} /></dt>
+				<dd>Remove Player</dd>
+			</dl>
 		</div>
 	{:else}
 		<ul class="grid grid-cols-2 gap-3 sm:gap-4">
@@ -122,19 +134,4 @@
 			{/each}
 		</ul>
 	{/if}
-
-	<div class="grid grid-cols-2 gap-3 sm:gap-4">
-		<button
-			class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
-			type="button"
-			disabled={!hasCheckIns}
-			onclick={onClearCheckIns}>Clear check-ins</button
-		>
-		<button
-			class="min-h-12 rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
-			type="button"
-			disabled={!canContinue}
-			onclick={onContinue}>Continue</button
-		>
-	</div>
 </section>

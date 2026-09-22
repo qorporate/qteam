@@ -15,6 +15,8 @@
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
 	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
+	const hasCheckIns = $derived(workspace.roster.some((player) => player.checkedIn === true));
+	const showPlayerActions = $derived(workspace.screen === 'players' && workspace.roster.length > 0);
 
 	onMount(() => {
 		const loaded = loadWorkspace(localStorage);
@@ -158,9 +160,7 @@
 				players={workspace.roster}
 				onUpdate={updatePlayer}
 				onCheckIn={updateCheckIn}
-				onClearCheckIns={clearCheckIns}
 				onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
-				onContinue={openSetup}
 			/>
 		{:else if workspace.screen === 'setup'}
 			<TeamSetup
@@ -177,6 +177,31 @@
 				onSwap={saveSwap}
 			/>
 		{/if}
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showPlayerActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showPlayerActions}
+	>
+		<div class="grid grid-cols-2 gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
+			<button
+				class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
+				type="button"
+				disabled={!showPlayerActions || !hasCheckIns}
+				onclick={clearCheckIns}>Clear check-ins</button
+			>
+			<button
+				class="min-h-12 rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
+				type="button"
+				disabled={!showPlayerActions || !rosterReady}
+				onclick={openSetup}>Continue</button
+			>
+		</div>
 	</div>
 
 	<WorkflowNav
