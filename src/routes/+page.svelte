@@ -17,6 +17,7 @@
 	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
 	const hasCheckIns = $derived(workspace.roster.some((player) => player.checkedIn === true));
 	const showPlayerActions = $derived(workspace.screen === 'players' && workspace.roster.length > 0);
+	const showSetupActions = $derived(workspace.screen === 'setup');
 
 	onMount(() => {
 		const loaded = loadWorkspace(localStorage);
@@ -135,7 +136,7 @@
 
 <div class="flex h-full min-h-0 flex-col">
 	<div
-		class="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto overscroll-y-contain px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+		class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-y-contain px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
 	>
 		{#if storageMessage}
 			<div
@@ -152,7 +153,7 @@
 		{/if}
 
 		{#if workspace.screen === 'players'}
-			<section class="border-b border-black/10 pb-8" aria-label="Add players">
+			<section class="border-b border-black/10 pb-4" aria-label="Add players">
 				<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
 			</section>
 
@@ -167,7 +168,6 @@
 				playerCount={workspace.roster.length}
 				teamCount={workspace.teamCount}
 				onChoose={chooseTeamCount}
-				onGenerate={generate}
 			/>
 		{:else}
 			<GeneratedTeams
@@ -190,16 +190,35 @@
 	>
 		<div class="grid grid-cols-2 gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
 			<button
-				class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
+				class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-3 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
 				type="button"
 				disabled={!showPlayerActions || !hasCheckIns}
 				onclick={clearCheckIns}>Clear check-ins</button
 			>
 			<button
-				class="min-h-12 rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
+				class="min-h-12 rounded-full bg-(--color-brand) px-3 py-2 text-sm/5 font-medium whitespace-nowrap text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
 				type="button"
 				disabled={!showPlayerActions || !rosterReady}
 				onclick={openSetup}>Continue</button
+			>
+		</div>
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showSetupActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showSetupActions}
+	>
+		<div class="px-4 py-3 sm:px-6 lg:px-8">
+			<button
+				class="min-h-12 w-full rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
+				type="button"
+				disabled={!showSetupActions || !workspace.teamCount}
+				onclick={generate}>Generate teams</button
 			>
 		</div>
 	</div>

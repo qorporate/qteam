@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { faCircleCheck, faTrashCan } from '@fortawesome/free-regular-svg-icons';
+	import { faCircleCheck, faPenToSquare, faTrashCan } from '@fortawesome/free-regular-svg-icons';
 	import Icon from '$lib/components/Icon.svelte';
 	import { POSITIONS, POSITION_LABELS, togglePosition } from '$lib/players';
 	import type { Player, PlayerUpdate, Position } from '$lib/types/players.types';
@@ -23,10 +23,10 @@
 	}
 </script>
 
-<section class="flex flex-col gap-5" aria-labelledby="roster-heading">
+<section class="flex flex-col gap-4" aria-labelledby="roster-heading">
 	<h2 id="roster-heading" class="sr-only">Roster</h2>
 	<p
-		class="text-center rounded-xl bg-(--color-surface) px-4 py-2 text-sm/5 font-medium tabular-nums w-full"
+		class="w-full rounded-xl bg-(--color-surface) px-4 py-2 text-center text-sm/5 font-medium tabular-nums"
 	>
 		{players.length}
 		{players.length === 1 ? 'player' : 'players'}
@@ -51,6 +51,8 @@
 				<dd>Check In</dd>
 				<dt class="text-(--color-danger)"><Icon icon={faTrashCan} size={16} /></dt>
 				<dd>Remove Player</dd>
+				<dt><Icon icon={faPenToSquare} size={16} /></dt>
+				<dd>Tap/click the player name to edit</dd>
 			</dl>
 		</div>
 	{:else}
@@ -60,7 +62,7 @@
 					<label>
 						<span class="sr-only">Player {index + 1}</span>
 						<input
-							class="w-full rounded-lg bg-transparent px-1 py-1 text-lg/6 font-medium transition-[background-color] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
+							class="min-h-11 w-full cursor-text rounded-lg border border-black/10 bg-(--color-surface-muted) px-3 py-2 text-lg/6 font-medium transition-[background-color,border-color] duration-150 ease-out hover:border-black/20 hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
 							value={player.name}
 							aria-invalid={!player.name.trim() ? 'true' : undefined}
 							aria-describedby={!player.name.trim() ? `player-${player.id}-error` : undefined}
