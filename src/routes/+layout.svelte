@@ -41,7 +41,7 @@
 				<span class="text-xl">QTeam</span>
 			</a>
 			<button
-				class="min-h-11 rounded-full border border-black/10 px-5 py-2 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
+				class="min-h-11 rounded-full border border-(--color-danger) bg-(--color-danger-soft) px-5 py-2 font-medium text-(--color-danger) transition-[background-color,color,transform] duration-150 ease-out hover:bg-(--color-danger) hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
 				type="button"
 				onclick={reset}>Reset</button
 			>

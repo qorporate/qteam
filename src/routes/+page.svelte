@@ -6,6 +6,7 @@
 	import TeamSetup from '$lib/components/TeamSetup.svelte';
 	import WorkflowNav from '$lib/components/WorkflowNav.svelte';
 	import { getRosterIssues } from '$lib/players';
+	import { formatTeams } from '$lib/sharing';
 	import { emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
 	import { generateTeams, isValidTeamCount } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
@@ -14,15 +15,21 @@
 
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
+	let teamActionMessage = $state('');
+	let copiedAll = $state(false);
+	let canShare = $state(false);
+	let copyFeedbackTimeout: ReturnType<typeof setTimeout>;
 	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
 	const hasCheckIns = $derived(workspace.roster.some((player) => player.checkedIn === true));
 	const showPlayerActions = $derived(workspace.screen === 'players' && workspace.roster.length > 0);
 	const showSetupActions = $derived(workspace.screen === 'setup');
+	const showTeamsActions = $derived(workspace.screen === 'teams' && Boolean(workspace.generated));
 
 	onMount(() => {
 		const loaded = loadWorkspace(localStorage);
 		workspace = loaded.workspace;
 		storageMessage = loaded.error ?? '';
+		canShare = typeof navigator.share === 'function';
 	});
 
 	function commitRoster(roster: Player[]) {
@@ -97,6 +104,7 @@
 
 	function generate() {
 		if (!workspace.teamCount) return;
+		teamActionMessage = '';
 		const result = generateTeams({
 			players: workspace.roster,
 			teamCount: workspace.teamCount,
@@ -117,6 +125,30 @@
 	function saveSwap(teams: GeneratedTeam[]) {
 		if (!workspace.generated) return;
 		saveWorkspaceState({ ...workspace, generated: { ...workspace.generated, teams } });
+	}
+
+	async function copyAllTeams() {
+		if (!workspace.generated) return;
+		try {
+			await navigator.clipboard.writeText(formatTeams(workspace.roster, workspace.generated.teams));
+			teamActionMessage = '';
+			copiedAll = true;
+			clearTimeout(copyFeedbackTimeout);
+			copyFeedbackTimeout = setTimeout(() => (copiedAll = false), 1500);
+		} catch {
+			copiedAll = false;
+			teamActionMessage = 'Copy failed. Select and copy the team text manually.';
+		}
+	}
+
+	async function shareTeams() {
+		if (!workspace.generated) return;
+		try {
+			await navigator.share({ text: formatTeams(workspace.roster, workspace.generated.teams) });
+			teamActionMessage = '';
+		} catch {
+			return;
+		}
 	}
 </script>
 
@@ -173,7 +205,7 @@
 			<GeneratedTeams
 				players={workspace.roster}
 				generated={workspace.generated!}
-				onGenerate={generate}
+				actionMessage={teamActionMessage}
 				onSwap={saveSwap}
 			/>
 		{/if}
@@ -220,6 +252,50 @@
 				disabled={!showSetupActions || !workspace.teamCount}
 				onclick={generate}>Generate teams</button
 			>
+		</div>
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showTeamsActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showTeamsActions}
+	>
+		<div
+			class={[
+				'grid gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8',
+				canShare ? 'grid-cols-3' : 'grid-cols-2'
+			]}
+		>
+			<button
+				class="flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-(--color-surface) px-2 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showTeamsActions}
+				onclick={copyAllTeams}
+			>
+				{copiedAll ? 'Copied!' : 'Copy all'}
+			</button>
+			{#if canShare}
+				<button
+					class="flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-(--color-surface) px-2 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+					type="button"
+					disabled={!showTeamsActions}
+					onclick={shareTeams}
+				>
+					Share
+				</button>
+			{/if}
+			<button
+				class="flex min-h-12 items-center justify-center rounded-full bg-(--color-brand) px-2 py-2 text-sm/5 font-medium whitespace-nowrap text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showTeamsActions}
+				onclick={generate}
+			>
+				Generate
+			</button>
 		</div>
 	</div>
 

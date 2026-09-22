@@ -22,7 +22,7 @@ test('generates teams and restores them after reload', async ({ page }) => {
 		origin: 'http://127.0.0.1:4173'
 	});
 	await page.getByRole('button', { name: 'Copy all' }).click();
-	await expect(page.getByText('All teams copied.')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
 	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
 	const teamB = page.getByRole('heading', { name: 'Team B' }).locator('xpath=ancestor::section');
 	const playerFromTeamB = (
