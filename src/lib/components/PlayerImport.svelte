@@ -24,7 +24,10 @@
 		onAdd(players);
 		text = result.errors.map(({ input }) => input).join('\n');
 		message = `${players.length} player${players.length === 1 ? '' : 's'} added.`;
-		if (!result.errors.length) onComplete();
+		if (!result.errors.length) {
+			message = '';
+			onComplete();
+		}
 	}
 
 	function cancel() {
@@ -40,7 +43,7 @@
 	</p>
 
 	<label class="flex flex-col gap-2">
-		<span class="text-sm/5 font-bold">Player list</span>
+		<span class="text-base/6 text-(--color-muted)">Player list</span>
 		<textarea
 			class="min-h-40 resize-y rounded-lg border border-black/10 bg-(--color-surface-muted) px-3 py-2.5 text-base/6 transition-[border-color,box-shadow] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
 			bind:value={text}
