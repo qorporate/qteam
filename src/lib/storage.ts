@@ -1,5 +1,10 @@
 import { getRosterIssues, isPosition } from './players';
-import { getGenerationIssues, isValidTeamCount } from './teams';
+import {
+	getGenerationIssues,
+	getTargetTeamSize,
+	getTeamCountForTargetSize,
+	isValidTeamCount
+} from './teams';
 import type { Player } from './types/players.types';
 import type { StorageLike, Workspace } from './types/storage.types';
 import type { GeneratedResult, GeneratedTeam } from './types/teams.types';
@@ -49,6 +54,17 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		(typeof teamCount !== 'number' || !isValidTeamCount(roster.length, teamCount))
 	)
 		return null;
+	const storedTeamSize = value.teamSize;
+	if (storedTeamSize !== undefined && typeof storedTeamSize !== 'number') return null;
+	const teamSize =
+		storedTeamSize ??
+		(typeof teamCount === 'number' ? getTargetTeamSize(roster.length, teamCount) : undefined);
+	if (
+		teamSize !== undefined &&
+		(typeof teamCount !== 'number' ||
+			getTeamCountForTargetSize(roster.length, teamSize) !== teamCount)
+	)
+		return null;
 	if ((value.screen === 'setup' || value.screen === 'teams') && getRosterIssues(roster).length)
 		return null;
 	const generated = decodeGenerated(value.generated, roster, teamCount);
@@ -59,6 +75,7 @@ export function decodeWorkspace(value: unknown): Workspace | null {
 		schemaVersion: 1,
 		screen: value.screen,
 		roster,
+		...(teamSize === undefined ? {} : { teamSize }),
 		...(teamCount === undefined ? {} : { teamCount }),
 		...(generated ? { generated } : {})
 	};

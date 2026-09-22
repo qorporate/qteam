@@ -3,6 +3,8 @@ import {
 	formatFormation,
 	generateTeams,
 	getGenerationIssues,
+	getTargetTeamSize,
+	getTeamCountForTargetSize,
 	getTeamSizes,
 	getValidTeamCounts,
 	isValidTeamCount,
@@ -32,6 +34,22 @@ describe('team sizes', () => {
 		expect(getTeamSizes(0, 2)).toEqual([]);
 		expect(getTeamSizes(8, 1.5)).toEqual([]);
 		expect(isValidTeamCount(8, 1)).toBe(false);
+	});
+
+	it('turns target team sizes into valid team counts', () => {
+		expect(getTeamCountForTargetSize(31, 4)).toBe(7);
+		expect(getTeamCountForTargetSize(31, 5)).toBe(7);
+		expect(getTeamCountForTargetSize(31, 8)).toBe(4);
+		expect(getTeamCountForTargetSize(18, 5)).toBe(4);
+		expect(getTeamCountForTargetSize(18, 8)).toBe(3);
+		expect(getTeamCountForTargetSize(7, 4)).toBeUndefined();
+		expect(getTeamCountForTargetSize(8, 3)).toBeUndefined();
+	});
+
+	it('infers a target size for older saved team counts', () => {
+		expect(getTargetTeamSize(31, 4)).toBe(8);
+		expect(getTargetTeamSize(12, 3)).toBe(4);
+		expect(getTargetTeamSize(8, 2)).toBe(4);
 	});
 });
 

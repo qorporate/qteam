@@ -8,7 +8,7 @@
 	import { getRosterIssues } from '$lib/players';
 	import { formatTeams } from '$lib/sharing';
 	import { emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
-	import { generateTeams, isValidTeamCount } from '$lib/teams';
+	import { generateTeams, getTeamCountForTargetSize } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
 	import type { GeneratedTeam } from '$lib/types/teams.types';
@@ -91,10 +91,17 @@
 		saveWorkspaceState({ ...workspace, screen: 'players' });
 	}
 
-	function chooseTeamCount(teamCount: number) {
-		if (!isValidTeamCount(workspace.roster.length, teamCount)) return;
-		if (workspace.teamCount === teamCount) return;
-		saveWorkspaceState({ schemaVersion: 1, screen: 'setup', roster: workspace.roster, teamCount });
+	function chooseTeamSize(teamSize: number) {
+		const teamCount = getTeamCountForTargetSize(workspace.roster.length, teamSize);
+		if (!teamCount) return;
+		if (workspace.teamSize === teamSize) return;
+		saveWorkspaceState({
+			schemaVersion: 1,
+			screen: 'setup',
+			roster: workspace.roster,
+			teamSize,
+			teamCount
+		});
 	}
 
 	function openTeams() {
@@ -198,8 +205,8 @@
 		{:else if workspace.screen === 'setup'}
 			<TeamSetup
 				playerCount={workspace.roster.length}
-				teamCount={workspace.teamCount}
-				onChoose={chooseTeamCount}
+				teamSize={workspace.teamSize}
+				onChoose={chooseTeamSize}
 			/>
 		{:else}
 			<GeneratedTeams
@@ -249,7 +256,7 @@
 			<button
 				class="min-h-12 w-full rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
 				type="button"
-				disabled={!showSetupActions || !workspace.teamCount}
+				disabled={!showSetupActions || !workspace.teamSize || !workspace.teamCount}
 				onclick={generate}>Generate teams</button
 			>
 		</div>

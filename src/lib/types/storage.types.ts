@@ -5,6 +5,7 @@ export type Workspace = {
 	schemaVersion: 1;
 	screen: 'players' | 'setup' | 'teams';
 	roster: Player[];
+	teamSize?: number;
 	teamCount?: number;
 	generated?: GeneratedResult;
 };

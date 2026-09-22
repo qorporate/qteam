@@ -17,6 +17,8 @@ const preferredFormations: Record<number, Record<Position, number>> = {
 	10: { DEFENDER: 4, MIDFIELDER: 3, FORWARD: 3 }
 };
 
+export const TEAM_SIZE_OPTIONS = [4, 5, 6, 7, 8] as const;
+
 export function getTeamSizes(playerCount: number, teamCount: number): number[] {
 	if (
 		!Number.isInteger(playerCount) ||
@@ -50,6 +52,35 @@ export function isValidTeamCount(playerCount: number, teamCount: number): boolea
 export function getValidTeamCounts(playerCount: number): number[] {
 	return Array.from({ length: playerCount }, (_, index) => index + 1).filter((teamCount) =>
 		isValidTeamCount(playerCount, teamCount)
+	);
+}
+
+export function getTeamCountForTargetSize(
+	playerCount: number,
+	teamSize: number
+): number | undefined {
+	if (!TEAM_SIZE_OPTIONS.includes(teamSize as (typeof TEAM_SIZE_OPTIONS)[number])) return undefined;
+
+	const validTeamCounts = getValidTeamCounts(playerCount);
+	if (!validTeamCounts.length) return undefined;
+	const idealTeamCount = Math.ceil(playerCount / teamSize);
+
+	return validTeamCounts.reduce((closest, candidate) =>
+		Math.abs(candidate - idealTeamCount) < Math.abs(closest - idealTeamCount) ? candidate : closest
+	);
+}
+
+export function getTargetTeamSize(playerCount: number, teamCount: number): number | undefined {
+	const matchingSizes = TEAM_SIZE_OPTIONS.filter(
+		(teamSize) => getTeamCountForTargetSize(playerCount, teamSize) === teamCount
+	);
+	if (!matchingSizes.length) return undefined;
+
+	const averageTeamSize = playerCount / teamCount;
+	return matchingSizes.reduce((closest, candidate) =>
+		Math.abs(candidate - averageTeamSize) < Math.abs(closest - averageTeamSize)
+			? candidate
+			: closest
 	);
 }
 

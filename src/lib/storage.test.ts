@@ -77,6 +77,7 @@ describe('workspace persistence', () => {
 		const setup: Workspace = {
 			schemaVersion: 1,
 			screen: 'setup',
+			teamSize: 4,
 			teamCount: 2,
 			roster: Array.from({ length: 8 }, (_, index) => ({
 				id: `player-${index}`,
@@ -89,11 +90,27 @@ describe('workspace persistence', () => {
 		expect(loadWorkspace(storage)).toEqual({ workspace: setup });
 	});
 
+	it('adds a target team size to an older saved setup', () => {
+		const legacy = {
+			schemaVersion: 1,
+			screen: 'setup',
+			teamCount: 2,
+			roster: Array.from({ length: 8 }, (_, index) => ({
+				id: `player-${index}`,
+				name: `Player ${index + 1}`,
+				eligiblePositions: ['MIDFIELDER']
+			}))
+		};
+
+		expect(decodeWorkspace(legacy)).toEqual({ ...legacy, teamSize: 4 });
+	});
+
 	it('round-trips generated teams', () => {
 		const storage = new MemoryStorage();
 		const teams: Workspace = {
 			schemaVersion: 1,
 			screen: 'teams',
+			teamSize: 4,
 			teamCount: 2,
 			roster: Array.from({ length: 8 }, (_, index) => ({
 				id: `player-${index}`,

@@ -11,10 +11,11 @@ test('generates teams and restores them after reload', async ({ page }) => {
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await expect(page.getByRole('heading', { name: 'Set up teams' })).toBeVisible();
-	await expect(page.getByRole('button', { name: /^3 teams/ })).toHaveCount(0);
-	const fourTeams = page.getByRole('button', { name: /4 teams.*8, 8, 8, 7 players/ });
-	await fourTeams.click();
-	await expect(fourTeams).toHaveAttribute('aria-pressed', 'true');
+	const eightAside = page.getByRole('button', {
+		name: /8v8: 4 teams, 7 to 8 players each/
+	});
+	await eightAside.click();
+	await expect(eightAside).toHaveAttribute('aria-pressed', 'true');
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 	await expect(page.getByRole('heading', { name: 'Generated teams' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
@@ -137,7 +138,7 @@ test('checks in players, prioritises them in the first two teams, and clears che
 	await expect(page.getByRole('button', { name: /^Uncheck/ })).toHaveCount(8);
 
 	await page.getByRole('button', { name: 'Continue' }).click();
-	await page.getByRole('button', { name: /3 teams.*4, 4, 4 players/ }).click();
+	await page.getByRole('button', { name: /4v4: 3 teams, 4 players each/ }).click();
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 
 	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
@@ -171,7 +172,7 @@ test('keeps a generated roster edit unchanged when confirmation is cancelled', a
 		.fill(Array.from({ length: 8 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
 	await page.getByRole('button', { name: 'Import', exact: true }).click();
 	await page.getByRole('button', { name: 'Continue' }).click();
-	await page.getByRole('button', { name: /2 teams.*4, 4 players/ }).click();
+	await page.getByRole('button', { name: /4v4: 2 teams, 4 players each/ }).click();
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 	await page.getByRole('button', { name: 'Players', exact: true }).click();
 
