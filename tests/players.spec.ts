@@ -17,7 +17,7 @@ test('generates teams and restores them after reload', async ({ page }) => {
 	await eightAside.click();
 	await expect(eightAside).toHaveAttribute('aria-pressed', 'true');
 	await page.getByRole('button', { name: 'Generate teams' }).click();
-	await expect(page.getByRole('heading', { name: 'Generated teams' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Generated team summary' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], {
 		origin: 'http://127.0.0.1:4173'
