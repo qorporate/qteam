@@ -10,7 +10,7 @@ test('generates teams and restores them after reload', async ({ page }) => {
 	await page.getByRole('button', { name: 'Import', exact: true }).click();
 	await page.getByRole('button', { name: 'Continue' }).click();
 
-	await expect(page.getByRole('heading', { name: 'Set up teams' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Choose a team size' })).toBeVisible();
 	const eightAside = page.getByRole('button', {
 		name: /8v8: 4 teams, 7 to 8 players each/
 	});
@@ -111,7 +111,7 @@ test('adds and edits a player, then starts over', async ({ page }) => {
 
 	page.once('dialog', (dialog) => dialog.accept());
 	await page.getByRole('button', { name: 'Reset' }).click();
-	await expect(page.getByText('Add or import players to build your roster.')).toBeVisible();
+	await expect(page.getByText('Add players to get started.')).toBeVisible();
 
 	await page.reload();
 	await expect(page.getByLabel('Player 1')).toHaveCount(0);
