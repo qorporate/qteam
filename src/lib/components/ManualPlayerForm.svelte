@@ -4,15 +4,18 @@
 
 	let {
 		onAdd,
-		onComplete
+		onComplete,
+		onCancel
 	}: {
 		onAdd: (player: Player) => void;
 		onComplete: () => void;
+		onCancel: () => void;
 	} = $props();
 	let name = $state('');
 	let positions = $state<Position[]>([]);
 	let nameError = $state('');
 	let positionError = $state('');
+	const canAdd = $derived(name.trim().length >= 1 && positions.length >= 1);
 
 	function addPlayer(event: SubmitEvent) {
 		event.preventDefault();
@@ -31,80 +34,63 @@
 		positions = togglePosition(positions, position);
 		positionError = '';
 	}
+
+	function cancel() {
+		name = '';
+		positions = [];
+		nameError = '';
+		positionError = '';
+		onCancel();
+	}
 </script>
 
-<details class="rounded-xl bg-(--color-surface-muted) p-3">
-	<summary
-		class="min-h-11 cursor-pointer content-center rounded-lg font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-		>Add one manually</summary
-	>
-	<form
-		class="flex flex-col gap-2 pt-3"
-		aria-label="Add player manually"
-		onsubmit={addPlayer}
-		novalidate
-	>
-		<label class="flex flex-col gap-1">
-			<span class="text-sm/5 font-bold">Player name</span>
-			<input
-				class="min-h-11 rounded-lg border border-black/10 bg-(--color-surface-muted) px-3 py-2.5 text-base/6 transition-[border-color,box-shadow] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
-				class:border-(--color-danger)={Boolean(nameError)}
-				bind:value={name}
-				aria-invalid={nameError ? 'true' : undefined}
-				aria-describedby={nameError ? 'manual-name-error' : undefined}
-				oninput={() => (nameError = '')}
-			/>
-			{#if nameError}
-				<span id="manual-name-error" class="text-sm/5 text-(--color-danger)">{nameError}</span>
-			{/if}
-		</label>
-
-		<div class="flex items-center gap-2">
-			<fieldset
-				class="min-w-0 flex-1"
-				aria-describedby={positionError ? 'manual-position-error' : undefined}
-			>
-				<legend class="sr-only">Positions</legend>
-				<div class="flex flex-wrap gap-2">
-					{#each POSITIONS as position (position)}
-						<button
-							class={[
-								'min-h-11 shrink-0 rounded-lg border px-2 py-2 text-sm/5 font-medium transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
-								positions.includes(position)
-									? 'border-(--color-brand) bg-(--color-brand-soft) hover:bg-(--color-brand-faint)'
-									: 'border-black/10 bg-(--color-surface) hover:border-(--color-brand) hover:bg-(--color-surface-strong)'
-							]}
-							type="button"
-							aria-pressed={positions.includes(position)}
-							onclick={() => toggle(position)}
-						>
-							{POSITION_LABELS[position]}
-						</button>
-					{/each}
-				</div>
-			</fieldset>
-			<span class="h-8 w-px bg-black/15" aria-hidden="true"></span>
-			<button
-				class="grid size-11 shrink-0 place-items-center rounded-lg bg-(--color-brand) text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="submit"
-				aria-label="Add player"
-				title="Add player"
-			>
-				<svg
-					class="size-5"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					aria-hidden="true"
-				>
-					<path d="M12 5v14M5 12h14" />
-				</svg>
-			</button>
-		</div>
-		{#if positionError}
-			<span id="manual-position-error" class="text-sm/5 text-(--color-danger)">{positionError}</span
-			>
+<form class="flex flex-col gap-5" aria-label="Add player manually" onsubmit={addPlayer} novalidate>
+	<label>
+		<span class="sr-only">Player name</span>
+		<input
+			class="min-h-14 w-full rounded-lg border border-black/10 bg-(--color-surface) px-4 py-3 text-lg/7 transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-(--color-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
+			class:border-(--color-danger)={Boolean(nameError)}
+			bind:value={name}
+			placeholder="Player name"
+			aria-invalid={nameError ? 'true' : undefined}
+			aria-describedby={nameError ? 'manual-name-error' : undefined}
+			oninput={() => (nameError = '')}
+		/>
+		{#if nameError}
+			<span id="manual-name-error" class="text-sm/5 text-(--color-danger)">{nameError}</span>
 		{/if}
-	</form>
-</details>
+	</label>
+
+	<fieldset aria-describedby={positionError ? 'manual-position-error' : undefined}>
+		<legend class="mb-1 text-base/6 text-(--color-muted)">Positions</legend>
+		<div class="flex flex-col">
+			{#each POSITIONS as position (position)}
+				<label class="flex min-h-11 cursor-pointer items-center gap-3 text-base/6">
+					<input
+						class="size-5 accent-(--color-brand)"
+						type="checkbox"
+						checked={positions.includes(position)}
+						onchange={() => toggle(position)}
+					/>
+					<span>{POSITION_LABELS[position]}</span>
+				</label>
+			{/each}
+		</div>
+	</fieldset>
+	{#if positionError}
+		<span id="manual-position-error" class="text-sm/5 text-(--color-danger)">{positionError}</span>
+	{/if}
+
+	<div class="grid grid-cols-2 gap-3 pt-1">
+		<button
+			class="min-h-12 rounded-full border border-black/15 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
+			type="button"
+			onclick={cancel}>Cancel</button
+		>
+		<button
+			class="min-h-12 rounded-full border border-black/15 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
+			type="submit"
+			disabled={!canAdd}>Add player</button
+		>
+	</div>
+</form>

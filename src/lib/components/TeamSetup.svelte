@@ -1,65 +1,81 @@
 <script lang="ts">
-	import { getTeamSizes, getValidTeamCounts } from '$lib/teams';
+	import { TEAM_SIZE_OPTIONS, getTeamCountForTargetSize, getTeamSizes } from '$lib/teams';
 
 	let {
 		playerCount,
-		teamCount,
-		onChoose,
-		onGenerate
+		teamSize,
+		onChoose
 	}: {
 		playerCount: number;
-		teamCount?: number;
-		onChoose: (teamCount: number) => void;
-		onGenerate: () => void;
+		teamSize?: number;
+		onChoose: (teamSize: number) => void;
 	} = $props();
 
-	const validTeamCounts = $derived(getValidTeamCounts(playerCount));
+	function optionDetails(size: number) {
+		const teamCount = getTeamCountForTargetSize(playerCount, size);
+		const sizes = teamCount ? getTeamSizes(playerCount, teamCount) : [];
+		return {
+			teamCount,
+			minimum: sizes.length ? Math.min(...sizes) : 0,
+			maximum: sizes.length ? Math.max(...sizes) : 0
+		};
+	}
 </script>
 
-<div class="flex flex-col gap-6">
-	<header class="flex flex-col gap-2">
-		<h1 class="text-2xl/8 font-medium text-balance">Set up teams</h1>
-		<p class="text-base/6 text-pretty text-(--color-muted)">
-			Choose how many teams to make from {playerCount} outfield players.
-		</p>
-	</header>
-
+<div class="flex flex-col gap-4">
 	<section
-		class="flex flex-col gap-4 rounded-2xl bg-(--color-surface) p-4 sm:p-6"
-		aria-labelledby="team-count-heading"
+		class="grid grid-cols-2 gap-3 border-b border-black/10 pb-4 sm:gap-4"
+		aria-label="Setup summary"
 	>
-		<h2 id="team-count-heading" class="text-lg/6 font-medium text-balance">Number of teams</h2>
-		<fieldset class="flex flex-col gap-2">
-			<legend class="sr-only">Choose the number of teams</legend>
-			{#each validTeamCounts as count (count)}
+		<div class="flex flex-col gap-1 rounded-2xl bg-(--color-surface) p-4">
+			<span class="text-2xl/8 font-medium tabular-nums">{playerCount}</span>
+			<span class="text-sm/5 text-(--color-muted)">Players</span>
+		</div>
+		<div class="flex flex-col gap-1 rounded-2xl bg-(--color-surface) p-4">
+			<span class="text-2xl/8 font-medium tabular-nums"
+				>{teamSize ? `${teamSize}v${teamSize}` : '—'}</span
+			>
+			<span class="text-sm/5 text-(--color-muted)">Target team size</span>
+		</div>
+	</section>
+
+	<section class="flex flex-col gap-4" aria-labelledby="team-size-heading">
+		<header class="flex flex-col gap-1">
+			<h2 id="team-size-heading" class="text-lg/6 font-medium text-balance">Choose a team size</h2>
+			<p class="text-sm/5 text-pretty text-(--color-muted)">
+				This is a target. Everyone plays, so final team sizes may differ.
+			</p>
+		</header>
+		<fieldset class="flex flex-col gap-3">
+			<legend class="sr-only">Choose the target number of players per team</legend>
+			{#each TEAM_SIZE_OPTIONS as size (size)}
+				{@const details = optionDetails(size)}
+				{@const playerSummary =
+					details.minimum === details.maximum
+						? `${details.minimum} players each`
+						: `${details.minimum} to ${details.maximum} players each`}
 				<button
 					class={[
-						'flex min-h-11 items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
-						teamCount === count
+						'flex min-h-20 items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
+						teamSize === size
 							? 'border-(--color-brand) bg-(--color-brand-soft) hover:bg-(--color-brand-faint)'
 							: 'border-black/10 bg-(--color-surface) hover:border-(--color-brand) hover:bg-(--color-surface-strong)'
 					]}
 					type="button"
-					aria-pressed={teamCount === count}
-					onclick={() => onChoose(count)}
+					aria-label={`${size}v${size}: ${details.teamCount} teams, ${playerSummary}`}
+					aria-pressed={teamSize === size}
+					onclick={() => onChoose(size)}
 				>
-					<span class="font-medium">{count} teams</span>
-					<span class="text-sm/5 text-(--color-muted)"
-						>{getTeamSizes(playerCount, count).join(', ')} players</span
-					>
+					<strong class="text-xl/6 font-medium tabular-nums">{size}v{size}</strong>
+					<span class="text-sm/5 text-(--color-muted)">
+						{details.teamCount}
+						{details.teamCount === 1 ? 'team' : 'teams'} ·
+						{details.minimum === details.maximum
+							? `${details.minimum} players each`
+							: `${details.minimum}–${details.maximum} players each`}
+					</span>
 				</button>
 			{/each}
 		</fieldset>
-
-		{#if teamCount}
-			<div class="flex flex-wrap items-center gap-3">
-				<p class="text-sm/5 text-(--color-muted)" aria-live="polite">Saved.</p>
-				<button
-					class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-					type="button"
-					onclick={onGenerate}>Generate teams</button
-				>
-			</div>
-		{/if}
 	</section>
 </div>

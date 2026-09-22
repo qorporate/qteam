@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { faCircleCheck, faCopy } from '@fortawesome/free-regular-svg-icons';
+	import Icon from '$lib/components/Icon.svelte';
 	import { POSITION_LABELS, POSITIONS } from '$lib/players';
-	import { formatTeam, formatTeams } from '$lib/sharing';
+	import { formatTeam } from '$lib/sharing';
 	import { formatFormation, getCoverageWarnings, swapPlayers, teamName } from '$lib/teams';
 	import type { Player, Position } from '$lib/types/players.types';
 	import type { GeneratedResult, GeneratedTeam } from '$lib/types/teams.types';
@@ -9,24 +10,22 @@
 	let {
 		players,
 		generated,
-		onGenerate,
+		actionMessage,
 		onSwap
 	}: {
 		players: Player[];
 		generated: GeneratedResult;
-		onGenerate: () => void;
+		actionMessage: string;
 		onSwap: (teams: GeneratedTeam[]) => void;
 	} = $props();
 
 	const playersById = $derived(new Map(players.map((player) => [player.id, player])));
 	const warnings = $derived(getCoverageWarnings(players, generated.teams));
 	let selected = $state<{ teamId: string; playerId: string }>();
-	let message = $state('');
-	let canShare = $state(false);
-
-	onMount(() => {
-		canShare = typeof navigator.share === 'function';
-	});
+	let swapMessage = $state('');
+	let copyMessage = $state('');
+	let copiedTeamId = $state<string>();
+	let copyFeedbackTimeout: ReturnType<typeof setTimeout>;
 
 	function assignedPlayers(team: GeneratedTeam, position: Position): Player[] {
 		return team.players
@@ -37,22 +36,22 @@
 	function selectPlayer(team: GeneratedTeam, playerId: string) {
 		if (!selected) {
 			selected = { teamId: team.id, playerId };
-			message = 'Choose a player on another team.';
+			swapMessage = 'Choose a player on another team.';
 			return;
 		}
 		if (selected.playerId === playerId) {
 			selected = undefined;
-			message = '';
+			swapMessage = '';
 			return;
 		}
 		if (selected.teamId === team.id) {
-			message = 'Choose a player on another team.';
+			swapMessage = 'Choose a player on another team.';
 			return;
 		}
 
 		const result = swapPlayers(players, generated.teams, selected.playerId, playerId);
 		if (!result.ok) {
-			message = result.issues.join(' ');
+			swapMessage = result.issues.join(' ');
 			return;
 		}
 		if (
@@ -63,61 +62,51 @@
 		}
 		onSwap(result.teams);
 		selected = undefined;
-		message = 'Swapped players.';
+		swapMessage = 'Swapped players.';
 	}
 
-	async function copy(text: string, label: string) {
+	async function copy(text: string, label: string, teamId: string) {
 		try {
 			await navigator.clipboard.writeText(text);
-			message = `${label} copied.`;
+			copyMessage = '';
+			copiedTeamId = teamId;
+			clearTimeout(copyFeedbackTimeout);
+			copyFeedbackTimeout = setTimeout(() => (copiedTeamId = undefined), 1500);
 		} catch {
-			message = 'Copy failed. Select and copy the team text manually.';
-		}
-	}
-
-	async function share() {
-		try {
-			await navigator.share({ text: formatTeams(players, generated.teams) });
-		} catch {
-			message = 'Sharing was cancelled.';
+			copiedTeamId = undefined;
+			copyMessage = `${label} could not be copied. Select and copy the team text manually.`;
 		}
 	}
 </script>
 
-<div class="flex flex-col gap-6">
-	<header class="flex flex-wrap items-end justify-between gap-4">
-		<div class="flex flex-col gap-2">
-			<h1 class="text-2xl/8 font-medium text-balance">Generated teams</h1>
-			<p class="text-base/6 text-pretty text-(--color-muted)">
-				Every player has been assigned once.
-			</p>
+<div class="flex flex-col gap-4">
+	<section
+		class="grid grid-cols-2 gap-3 border-b border-black/10 pb-4 sm:gap-4"
+		aria-label="Generated team summary"
+	>
+		<div class="flex flex-col gap-1 rounded-2xl bg-(--color-surface) p-4">
+			<span class="text-2xl/8 font-medium tabular-nums">{generated.teams.length}</span>
+			<span class="text-sm/5 text-(--color-muted)">
+				{generated.teams.length === 1 ? 'Team' : 'Teams'}
+			</span>
 		</div>
-		<div class="flex flex-wrap gap-2">
-			<button
-				class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				onclick={() => copy(formatTeams(players, generated.teams), 'All teams')}>Copy all</button
-			>
-			{#if canShare}
-				<button
-					class="min-h-11 rounded-lg bg-(--color-surface-muted) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-					type="button"
-					onclick={share}>Share</button
-				>
-			{/if}
-			<button
-				class="min-h-11 rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				onclick={onGenerate}>Generate another</button
-			>
+		<div class="flex flex-col gap-1 rounded-2xl bg-(--color-surface) p-4">
+			<span class="text-2xl/8 font-medium tabular-nums">{players.length}</span>
+			<span class="text-sm/5 text-(--color-muted)">
+				{players.length === 1 ? 'Player' : 'Players'}
+			</span>
 		</div>
-	</header>
+	</section>
 
-	<p class="text-sm/5 text-pretty text-(--color-muted)">
-		Select two players from different teams to swap them.
-	</p>
-	{#if message}
-		<p class="text-sm/5" aria-live="polite">{message}</p>
+	<section class="rounded-2xl bg-(--color-surface) p-4" aria-labelledby="swap-heading">
+		<h2 id="swap-heading" class="font-medium">Swap players</h2>
+		<p class="mt-1 text-sm/5 text-pretty text-(--color-muted)" aria-live="polite">
+			{swapMessage || 'Select a player, then select someone on another team.'}
+		</p>
+	</section>
+
+	{#if actionMessage || copyMessage}
+		<p class="text-sm/5 text-(--color-danger)" role="alert">{actionMessage || copyMessage}</p>
 	{/if}
 
 	{#if warnings.length}
@@ -134,77 +123,69 @@
 		</aside>
 	{/if}
 
-	<div class="grid gap-4 sm:grid-cols-2">
+	<div class="flex flex-col gap-4">
 		{#each generated.teams as team, index (team.id)}
 			<section
-				class="flex flex-col gap-4 rounded-2xl bg-(--color-surface) p-4"
+				class="flex flex-col gap-5 rounded-2xl bg-(--color-surface) p-4 sm:p-6"
 				aria-labelledby={`team-${team.id}`}
 			>
-				<header class="flex items-start justify-between gap-3">
+				<header class="flex items-center justify-between gap-3 border-b border-black/10 pb-4">
 					<div class="flex flex-col gap-1">
 						<h2 id={`team-${team.id}`} class="text-xl/6 font-medium text-balance">
 							Team {teamName(index)}
 						</h2>
-						<p class="text-sm/5 text-(--color-muted)">{formatFormation(team)}</p>
+						<p class="text-sm/5 text-(--color-muted)">
+							{team.players.length} players · {formatFormation(team)}
+						</p>
 					</div>
-					<div class="flex items-center gap-2">
-						<span
-							class="rounded-full bg-(--color-brand-soft) px-2 py-1 text-xs/4 font-bold tabular-nums"
-							>{team.players.length}</span
-						>
-						<button
-							class="min-h-11 rounded-lg bg-(--color-surface-muted) px-3 text-sm font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-							type="button"
-							aria-label={`Copy Team ${teamName(index)}`}
-							onclick={() => copy(formatTeam(players, team, index), `Team ${teamName(index)}`)}
-							>Copy</button
-						>
-					</div>
+					<button
+						class="flex min-h-11 items-center gap-2 rounded-full border border-black/10 px-3 text-sm font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
+						type="button"
+						aria-label={`Copy Team ${teamName(index)}`}
+						onclick={() =>
+							copy(formatTeam(players, team, index), `Team ${teamName(index)}`, team.id)}
+					>
+						<Icon icon={faCopy} size={16} />
+						{copiedTeamId === team.id ? 'Copied!' : 'Copy'}
+					</button>
 				</header>
 
-				{#each POSITIONS as position (position)}
-					{@const assigned = assignedPlayers(team, position)}
-					{#if assigned.length}
-						<div class="flex flex-col gap-1">
-							<h3 class="text-sm/5 font-bold">{POSITION_LABELS[position]}s</h3>
-							<ul class="flex flex-col gap-1 text-sm/5 text-(--color-muted)">
-								{#each assigned as player, playerIndex (player.id)}
-									<li>
-										<button
-											class={[
-												'flex min-h-11 w-full items-center rounded-lg px-2 text-left transition-[background-color,color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
-												selected?.playerId === player.id
-													? 'bg-(--color-brand-soft) text-(--color-ink) hover:bg-(--color-brand-faint)'
-													: 'bg-(--color-surface-muted) hover:bg-(--color-surface-strong)'
-											]}
-											type="button"
-											aria-pressed={selected?.playerId === player.id}
-											onclick={() => selectPlayer(team, player.id)}
-										>
-											<span class="flex min-w-0 items-center gap-2">
-												<span>{playerIndex + 1}. {player.name}</span>
-												{#if player.checkedIn === true}
-													<svg
-														class="size-4 shrink-0 text-(--color-brand)"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="2"
-														role="img"
-														aria-label="Checked in"
-													>
-														<circle cx="12" cy="12" r="9" />
-														<path d="m8 12 2.5 2.5L16 9" />
-													</svg>
-												{/if}
-											</span>
-										</button>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-				{/each}
+				<div class="grid gap-4 sm:grid-cols-3">
+					{#each POSITIONS as position (position)}
+						{@const assigned = assignedPlayers(team, position)}
+						{#if assigned.length}
+							<div class="flex min-w-0 flex-col gap-2">
+								<h3 class="text-sm/5 font-bold">{POSITION_LABELS[position]}s</h3>
+								<ul class="flex flex-col gap-1 text-sm/5 text-(--color-muted)">
+									{#each assigned as player, playerIndex (player.id)}
+										<li>
+											<button
+												class={[
+													'flex min-h-11 w-full items-center rounded-lg px-3 text-left transition-[background-color,color,transform] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100',
+													selected?.playerId === player.id
+														? 'bg-(--color-brand-soft) text-(--color-ink) hover:bg-(--color-brand-faint)'
+														: 'bg-(--color-surface-muted) hover:bg-(--color-surface-strong)'
+												]}
+												type="button"
+												aria-pressed={selected?.playerId === player.id}
+												onclick={() => selectPlayer(team, player.id)}
+											>
+												<span class="flex min-w-0 items-center gap-2">
+													<span class="truncate">{playerIndex + 1}. {player.name}</span>
+													{#if player.checkedIn === true}
+														<span class="shrink-0" role="img" aria-label="Checked in">
+															<Icon icon={faCircleCheck} size={16} colour="var(--color-brand)" />
+														</span>
+													{/if}
+												</span>
+											</button>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{/if}
+					{/each}
+				</div>
 			</section>
 		{/each}
 	</div>

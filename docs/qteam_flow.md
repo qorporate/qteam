@@ -8,17 +8,17 @@ The user controls:
 
 - the players and their eligible positions;
 - which players have checked in for the current game;
-- the number of teams;
+- the target team size;
 - manual one-for-one swaps after generation.
 
 QTeam controls:
 
-- team sizes;
+- the number and final sizes of the teams;
 - each player's assigned position;
 - the resulting formation of each team.
 
-> Every player plays. The user chooses the number of teams; QTeam chooses the fairest available
-> sizes and positional assignments.
+> Every player plays. The user chooses a target team size; QTeam chooses the fairest available
+> number of teams, final sizes, and positional assignments.
 
 QTeam balances positions, not player skill.
 
@@ -45,7 +45,7 @@ Players (optional check-in) -> Team setup -> Teams
 1. Add or import players.
 2. Review the roster.
 3. Check in players who have arrived.
-4. Choose a valid team count.
+4. Choose a target team size from 4v4 through 8v8.
 5. Generate teams.
 6. Optionally swap players.
 7. Copy or share the result.
@@ -149,7 +149,18 @@ copied or shared team output.
 
 ## 5. Team setup
 
-The user chooses only the number of teams.
+The user chooses a target team size: 4v4, 5v5, 6v6, 7v7, or 8v8. The target is not a promise
+that every team will contain exactly that number. Every player remains included and there are no
+substitutes.
+
+Start with the ideal number of teams:
+
+```ts
+const idealTeamCount = Math.ceil(playerCount / targetTeamSize);
+```
+
+Choose the valid team count closest to that ideal, then calculate the final sizes. Preview the
+result on every option before selection, for example `4 teams · 7–8 players each`.
 
 For `playerCount` players and `teamCount` teams:
 
@@ -171,16 +182,14 @@ smallest team size >= 4
 largest team size <= 10
 ```
 
-Show only valid options and preview their calculated sizes. With a valid roster of eight or more
-players, at least one valid option always exists.
+With a valid roster of eight or more players, at least one valid team count always exists. If the
+ideal count would create a team outside the 4–10 player range, use the closest valid count.
 
-Example for 31 players:
+Example for 31 players choosing 8v8:
 
 ```text
 4 teams: 8, 8, 8, 7
 ```
-
-There are no substitutes.
 
 ## 6. Generation
 
@@ -346,6 +355,7 @@ type Workspace = {
   schemaVersion: 1;
   screen: 'players' | 'setup' | 'teams';
   roster: Player[];
+  teamSize?: number;
   teamCount?: number;
   generated?: GeneratedResult;
 };
@@ -512,8 +522,9 @@ Done after real Qball lists import correctly and a reload preserves edits.
 
 ### Version 2: Team setup
 
-- valid team counts
-- calculated size preview
+- target sizes from 4v4 through 8v8
+- derived valid team counts
+- calculated team count and size preview
 - navigation guards
 
 Done after boundary tests and real indivisible rosters such as 25, 29, and 31 players.
@@ -559,7 +570,7 @@ size, position, persistence, and sharing rules.
 ## 13. Definition of done
 
 - A real Qball list imports without data loss.
-- Only valid team counts are offered.
+- Every target size resolves to a valid team count and previews the final size range.
 - Every generated and swapped result satisfies the hard rules.
 - Weak rosters generate honest warnings.
 - The same seed reproduces the same result.

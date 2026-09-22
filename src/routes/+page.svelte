@@ -6,21 +6,30 @@
 	import TeamSetup from '$lib/components/TeamSetup.svelte';
 	import WorkflowNav from '$lib/components/WorkflowNav.svelte';
 	import { getRosterIssues } from '$lib/players';
-	import { clearWorkspace, emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
-	import { generateTeams, isValidTeamCount } from '$lib/teams';
+	import { formatTeams } from '$lib/sharing';
+	import { emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
+	import { generateTeams, getTeamCountForTargetSize } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
 	import type { GeneratedTeam } from '$lib/types/teams.types';
 
 	let workspace = $state<Workspace>(emptyWorkspace());
 	let storageMessage = $state('');
-	let formKey = $state(0);
+	let teamActionMessage = $state('');
+	let copiedAll = $state(false);
+	let canShare = $state(false);
+	let copyFeedbackTimeout: ReturnType<typeof setTimeout>;
 	const rosterReady = $derived(getRosterIssues(workspace.roster).length === 0);
+	const hasCheckIns = $derived(workspace.roster.some((player) => player.checkedIn === true));
+	const showPlayerActions = $derived(workspace.screen === 'players' && workspace.roster.length > 0);
+	const showSetupActions = $derived(workspace.screen === 'setup');
+	const showTeamsActions = $derived(workspace.screen === 'teams' && Boolean(workspace.generated));
 
 	onMount(() => {
 		const loaded = loadWorkspace(localStorage);
 		workspace = loaded.workspace;
 		storageMessage = loaded.error ?? '';
+		canShare = typeof navigator.share === 'function';
 	});
 
 	function commitRoster(roster: Player[]) {
@@ -73,17 +82,6 @@
 		});
 	}
 
-	function startOver() {
-		if (!confirm('Start over? This removes every player from the roster.')) return;
-		if (!clearWorkspace(localStorage)) {
-			storageMessage = 'The saved roster could not be cleared.';
-			return;
-		}
-
-		workspace = emptyWorkspace();
-		formKey++;
-	}
-
 	function openSetup() {
 		if (!rosterReady) return;
 		saveWorkspaceState({ ...workspace, screen: 'setup' });
@@ -93,10 +91,17 @@
 		saveWorkspaceState({ ...workspace, screen: 'players' });
 	}
 
-	function chooseTeamCount(teamCount: number) {
-		if (!isValidTeamCount(workspace.roster.length, teamCount)) return;
-		if (workspace.teamCount === teamCount) return;
-		saveWorkspaceState({ schemaVersion: 1, screen: 'setup', roster: workspace.roster, teamCount });
+	function chooseTeamSize(teamSize: number) {
+		const teamCount = getTeamCountForTargetSize(workspace.roster.length, teamSize);
+		if (!teamCount) return;
+		if (workspace.teamSize === teamSize) return;
+		saveWorkspaceState({
+			schemaVersion: 1,
+			screen: 'setup',
+			roster: workspace.roster,
+			teamSize,
+			teamCount
+		});
 	}
 
 	function openTeams() {
@@ -106,6 +111,7 @@
 
 	function generate() {
 		if (!workspace.teamCount) return;
+		teamActionMessage = '';
 		const result = generateTeams({
 			players: workspace.roster,
 			teamCount: workspace.teamCount,
@@ -127,6 +133,30 @@
 		if (!workspace.generated) return;
 		saveWorkspaceState({ ...workspace, generated: { ...workspace.generated, teams } });
 	}
+
+	async function copyAllTeams() {
+		if (!workspace.generated) return;
+		try {
+			await navigator.clipboard.writeText(formatTeams(workspace.roster, workspace.generated.teams));
+			teamActionMessage = '';
+			copiedAll = true;
+			clearTimeout(copyFeedbackTimeout);
+			copyFeedbackTimeout = setTimeout(() => (copiedAll = false), 1500);
+		} catch {
+			copiedAll = false;
+			teamActionMessage = 'Copy failed. Select and copy the team text manually.';
+		}
+	}
+
+	async function shareTeams() {
+		if (!workspace.generated) return;
+		try {
+			await navigator.share({ text: formatTeams(workspace.roster, workspace.generated.teams) });
+			teamActionMessage = '';
+		} catch {
+			return;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -143,7 +173,139 @@
 	/>
 </svelte:head>
 
-<div class="flex flex-col gap-8">
+<div class="flex h-full min-h-0 flex-col">
+	<div
+		class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-y-contain px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+	>
+		{#if storageMessage}
+			<div
+				class="flex items-start justify-between gap-4 rounded-xl bg-(--color-danger-soft) p-4 text-sm/5 text-(--color-danger)"
+				role="alert"
+			>
+				<p>{storageMessage}</p>
+				<button
+					class="min-h-11 shrink-0 rounded-lg px-3 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
+					type="button"
+					onclick={() => (storageMessage = '')}>Dismiss</button
+				>
+			</div>
+		{/if}
+
+		{#if workspace.screen === 'players'}
+			<section class="border-b border-black/10 pb-4" aria-label="Add players">
+				<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+			</section>
+
+			<PlayerRoster
+				players={workspace.roster}
+				onUpdate={updatePlayer}
+				onCheckIn={updateCheckIn}
+				onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
+			/>
+		{:else if workspace.screen === 'setup'}
+			<TeamSetup
+				playerCount={workspace.roster.length}
+				teamSize={workspace.teamSize}
+				onChoose={chooseTeamSize}
+			/>
+		{:else}
+			<GeneratedTeams
+				players={workspace.roster}
+				generated={workspace.generated!}
+				actionMessage={teamActionMessage}
+				onSwap={saveSwap}
+			/>
+		{/if}
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showPlayerActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showPlayerActions}
+	>
+		<div class="grid grid-cols-2 gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
+			<button
+				class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-3 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showPlayerActions || !hasCheckIns}
+				onclick={clearCheckIns}>Clear check-ins</button
+			>
+			<button
+				class="min-h-12 rounded-full bg-(--color-brand) px-3 py-2 text-sm/5 font-medium whitespace-nowrap text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showPlayerActions || !rosterReady}
+				onclick={openSetup}>Continue</button
+			>
+		</div>
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showSetupActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showSetupActions}
+	>
+		<div class="px-4 py-3 sm:px-6 lg:px-8">
+			<button
+				class="min-h-12 w-full rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
+				type="button"
+				disabled={!showSetupActions || !workspace.teamSize || !workspace.teamCount}
+				onclick={generate}>Generate teams</button
+			>
+		</div>
+	</div>
+
+	<div
+		class={[
+			'z-10 shrink-0 overflow-hidden bg-(--color-surface) transition-[max-height,opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+			showTeamsActions
+				? 'max-h-24 translate-y-0 border-t border-black/10 opacity-100'
+				: 'pointer-events-none max-h-0 translate-y-full opacity-0'
+		]}
+		aria-hidden={!showTeamsActions}
+	>
+		<div
+			class={[
+				'grid gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8',
+				canShare ? 'grid-cols-3' : 'grid-cols-2'
+			]}
+		>
+			<button
+				class="flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-(--color-surface) px-2 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showTeamsActions}
+				onclick={copyAllTeams}
+			>
+				{copiedAll ? 'Copied!' : 'Copy all'}
+			</button>
+			{#if canShare}
+				<button
+					class="flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-(--color-surface) px-2 py-2 text-sm/5 font-medium whitespace-nowrap transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+					type="button"
+					disabled={!showTeamsActions}
+					onclick={shareTeams}
+				>
+					Share
+				</button>
+			{/if}
+			<button
+				class="flex min-h-12 items-center justify-center rounded-full bg-(--color-brand) px-2 py-2 text-sm/5 font-medium whitespace-nowrap text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:pointer-events-none motion-reduce:active:scale-100 sm:px-4 sm:text-base/6"
+				type="button"
+				disabled={!showTeamsActions}
+				onclick={generate}
+			>
+				Generate
+			</button>
+		</div>
+	</div>
+
 	<WorkflowNav
 		screen={workspace.screen}
 		canOpenSetup={rosterReady}
@@ -152,65 +314,4 @@
 		onSetup={openSetup}
 		onTeams={openTeams}
 	/>
-
-	{#if storageMessage}
-		<div
-			class="flex items-start justify-between gap-4 rounded-xl bg-(--color-danger-soft) p-4 text-sm/5 text-(--color-danger)"
-			role="alert"
-		>
-			<p>{storageMessage}</p>
-			<button
-				class="min-h-11 shrink-0 rounded-lg px-3 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				onclick={() => (storageMessage = '')}>Dismiss</button
-			>
-		</div>
-	{/if}
-
-	{#if workspace.screen === 'players'}
-		<header class="flex flex-col gap-2">
-			<h1 class="text-2xl/8 font-medium text-balance">Build your player list</h1>
-			<p class="text-base/6 text-pretty text-(--color-muted)">
-				Add players and the positions they can play. QTeam will use them to create balanced teams.
-			</p>
-		</header>
-
-		<aside
-			class="flex flex-col gap-1 rounded-xl bg-(--color-warning-soft) p-4 text-sm/5"
-			aria-label="Goalkeeper notice"
-		>
-			<p class="font-medium">Outfield players only</p>
-			<p class="text-(--color-muted)">
-				QTeam does not include goalkeepers. Add only outfield players.
-			</p>
-		</aside>
-
-		{#key formKey}
-			<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
-		{/key}
-
-		<PlayerRoster
-			players={workspace.roster}
-			onUpdate={updatePlayer}
-			onCheckIn={updateCheckIn}
-			onClearCheckIns={clearCheckIns}
-			onRemove={(id) => commitRoster(workspace.roster.filter((player) => player.id !== id))}
-			onStartOver={startOver}
-			onContinue={openSetup}
-		/>
-	{:else if workspace.screen === 'setup'}
-		<TeamSetup
-			playerCount={workspace.roster.length}
-			teamCount={workspace.teamCount}
-			onChoose={chooseTeamCount}
-			onGenerate={generate}
-		/>
-	{:else}
-		<GeneratedTeams
-			players={workspace.roster}
-			generated={workspace.generated!}
-			onGenerate={generate}
-			onSwap={saveSwap}
-		/>
-	{/if}
 </div>
