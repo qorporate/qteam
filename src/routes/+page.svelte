@@ -133,7 +133,7 @@
 
 <div class="flex h-full min-h-0 flex-col">
 	<div
-		class="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+		class="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto overscroll-y-contain px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
 	>
 		{#if storageMessage}
 			<div
@@ -150,7 +150,9 @@
 		{/if}
 
 		{#if workspace.screen === 'players'}
-			<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+			<section class="border-b border-black/10 pb-8" aria-label="Add players">
+				<AddPlayersDialog onAdd={(players) => commitRoster([...workspace.roster, ...players])} />
+			</section>
 
 			<PlayerRoster
 				players={workspace.roster}

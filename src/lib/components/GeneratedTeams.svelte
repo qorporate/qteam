@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { faCircleCheck } from '@fortawesome/free-regular-svg-icons';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 	import { POSITION_LABELS, POSITIONS } from '$lib/players';
 	import { formatTeam, formatTeams } from '$lib/sharing';
@@ -184,18 +186,9 @@
 											<span class="flex min-w-0 items-center gap-2">
 												<span>{playerIndex + 1}. {player.name}</span>
 												{#if player.checkedIn === true}
-													<svg
-														class="size-4 shrink-0 text-(--color-brand)"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="2"
-														role="img"
-														aria-label="Checked in"
-													>
-														<circle cx="12" cy="12" r="9" />
-														<path d="m8 12 2.5 2.5L16 9" />
-													</svg>
+													<span role="img" aria-label="Checked in">
+														<Icon icon={faCircleCheck} size={16} colour="var(--color-brand)" />
+													</span>
 												{/if}
 											</span>
 										</button>

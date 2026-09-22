@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { faCircleCheck, faTrashCan } from '@fortawesome/free-regular-svg-icons';
+	import Icon from '$lib/components/Icon.svelte';
 	import { POSITIONS, POSITION_LABELS, getRosterIssues, togglePosition } from '$lib/players';
 	import type { Player, PlayerUpdate, Position } from '$lib/types/players.types';
 
@@ -19,6 +21,8 @@
 	} = $props();
 
 	const issues = $derived(getRosterIssues(players));
+	const hasCheckIns = $derived(players.some((player) => player.checkedIn === true));
+	const canContinue = $derived(issues.length === 0);
 
 	function togglePlayerPosition(player: Player, position: Position) {
 		onUpdate(player.id, {
@@ -29,13 +33,6 @@
 
 <section class="flex flex-col gap-5" aria-labelledby="roster-heading">
 	<h2 id="roster-heading" class="sr-only">Roster</h2>
-	{#if players.some((player) => player.checkedIn === true)}
-		<button
-			class="min-h-11 self-end rounded-lg px-3 py-2 text-sm/5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-			type="button"
-			onclick={onClearCheckIns}>Clear check-ins</button
-		>
-	{/if}
 
 	{#if players.length === 0}
 		<div class="flex flex-col gap-2 rounded-2xl bg-(--color-surface) p-6">
@@ -102,16 +99,7 @@
 								aria-pressed={player.checkedIn === true}
 								onclick={() => onCheckIn(player.id)}
 							>
-								<svg
-									class="size-5"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									aria-hidden="true"
-								>
-									<path d="m5 12 4 4L19 6" />
-								</svg>
+								<Icon icon={faCircleCheck} />
 							</button>
 							<button
 								class="grid min-h-12 place-items-center rounded-full border border-black/10 text-(--color-danger) transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-danger-soft) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-danger) active:scale-[0.96] motion-reduce:active:scale-100"
@@ -120,16 +108,7 @@
 								title="Remove player"
 								onclick={() => onRemove(player.id)}
 							>
-								<svg
-									class="size-5"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									aria-hidden="true"
-								>
-									<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
-								</svg>
+								<Icon icon={faTrashCan} />
 							</button>
 						</div>
 					</div>
@@ -144,26 +123,18 @@
 		</ul>
 	{/if}
 
-	<div
-		class="flex flex-col gap-2 rounded-xl bg-(--color-surface-muted) p-4 text-sm/5"
-		aria-live="polite"
-	>
-		<p class="font-bold">{issues.length ? 'Roster not ready' : 'Roster ready'}</p>
-		{#if issues.length}
-			<ul class="flex flex-col gap-1 text-(--color-muted)">
-				{#each issues as issue (issue)}
-					<li>{issue}</li>
-				{/each}
-			</ul>
-		{:else}
-			<p class="text-pretty text-(--color-muted)">
-				Every player has a name and at least one position.
-			</p>
-			<button
-				class="min-h-11 self-start rounded-lg bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				onclick={onContinue}>Choose teams</button
-			>
-		{/if}
+	<div class="grid grid-cols-2 gap-3 sm:gap-4">
+		<button
+			class="min-h-12 rounded-full border border-black/10 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
+			type="button"
+			disabled={!hasCheckIns}
+			onclick={onClearCheckIns}>Clear check-ins</button
+		>
+		<button
+			class="min-h-12 rounded-full bg-(--color-brand) px-4 py-2.5 font-medium text-(--color-ink) transition-[background-color,box-shadow,transform] duration-150 ease-out hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-strong) disabled:text-(--color-disabled) disabled:hover:shadow-none disabled:active:scale-100 motion-reduce:active:scale-100"
+			type="button"
+			disabled={!canContinue}
+			onclick={onContinue}>Continue</button
+		>
 	</div>
 </section>

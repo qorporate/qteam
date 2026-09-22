@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { faShareFromSquare, faSquarePlus } from '@fortawesome/free-regular-svg-icons';
+	import Icon from '$lib/components/Icon.svelte';
 	import ManualPlayerForm from '$lib/components/ManualPlayerForm.svelte';
 	import PlayerImport from '$lib/components/PlayerImport.svelte';
 	import type { Player } from '$lib/types/players.types';
@@ -23,16 +25,7 @@
 		type="button"
 		onclick={() => open('import')}
 	>
-		<svg
-			class="size-5 shrink-0"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
-		</svg>
+		<Icon icon={faShareFromSquare} />
 		Import players
 	</button>
 	<button
@@ -40,16 +33,7 @@
 		type="button"
 		onclick={() => open('manual')}
 	>
-		<svg
-			class="size-5 shrink-0"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<path d="M12 5v14M5 12h14" />
-		</svg>
+		<Icon icon={faSquarePlus} />
 		Add manually
 	</button>
 </div>
@@ -60,35 +44,17 @@
 	aria-labelledby="add-players-heading"
 >
 	<div class="flex max-h-[calc(100dvh-2rem)] flex-col">
-		<header class="flex items-center justify-between gap-4 p-4 sm:p-6">
+		<header class="p-4 sm:p-6">
 			<h2 id="add-players-heading" class="text-2xl/8 font-medium text-balance">
-				{mode === 'import' ? 'Import players' : 'Add manually'}
+				{mode === 'import' ? 'Import players' : 'Add player'}
 			</h2>
-			<button
-				class="grid size-11 shrink-0 place-items-center rounded-lg bg-(--color-surface-muted) transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
-				type="button"
-				aria-label="Close"
-				title="Close"
-				onclick={close}
-			>
-				<svg
-					class="size-5"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					aria-hidden="true"
-				>
-					<path d="m6 6 12 12M18 6 6 18" />
-				</svg>
-			</button>
 		</header>
 
-		<div class="flex flex-col gap-5 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6">
+		<div class="flex flex-col gap-5 overflow-y-auto px-4 pt-1 pb-4 sm:px-6 sm:pb-6">
 			{#if mode === 'import'}
-				<PlayerImport {onAdd} onComplete={close} showHeader={false} />
+				<PlayerImport {onAdd} onComplete={close} onCancel={close} />
 			{:else}
-				<ManualPlayerForm onAdd={(player) => onAdd([player])} onComplete={close} />
+				<ManualPlayerForm onAdd={(player) => onAdd([player])} onComplete={close} onCancel={close} />
 			{/if}
 		</div>
 	</div>
