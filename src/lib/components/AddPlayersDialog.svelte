@@ -5,7 +5,7 @@
 	import PlayerImport from '$lib/components/PlayerImport.svelte';
 	import type { Player } from '$lib/types/players.types';
 
-	let { rosterSize, onAdd }: { rosterSize: number; onAdd: (players: Player[]) => void } = $props();
+	let { onAdd }: { onAdd: (players: Player[]) => void } = $props();
 	let dialog: HTMLDialogElement;
 	let mode = $state<'import' | 'manual'>('import');
 
@@ -80,7 +80,7 @@
 
 		<div class="flex flex-col gap-5 overflow-y-auto px-4 pt-1 pb-4 sm:px-6 sm:pb-6">
 			{#if mode === 'import'}
-				<PlayerImport {rosterSize} {onAdd} onComplete={close} onCancel={close} />
+				<PlayerImport {onAdd} onComplete={close} onCancel={close} />
 			{:else}
 				<ManualPlayerForm onAdd={(player) => onAdd([player])} onComplete={close} onCancel={close} />
 			{/if}

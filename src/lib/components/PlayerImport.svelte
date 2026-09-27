@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import { POSITION_LABELS, createPlayer, parsePlayerList } from '$lib/players';
-	import type { Player, Position } from '$lib/types/players.types';
+	import { createPlayer, parsePlayerList } from '$lib/players';
+	import type { Player } from '$lib/types/players.types';
 
 	let {
-		rosterSize,
 		onAdd,
 		onComplete,
 		onCancel
 	}: {
-		rosterSize: number;
 		onAdd: (players: Player[]) => void;
 		onComplete: () => void;
 		onCancel: () => void;
@@ -17,24 +15,7 @@
 	let text = $state('');
 	const placeholder = '1. Anuv Love - Forward\n2. Femi - Defender, Midfielder';
 
-	const CHIP_STYLES: Record<Position, string> = {
-		DEFENDER: 'bg-defender',
-		MIDFIELDER: 'bg-midfielder',
-		FORWARD: 'bg-forward'
-	};
-
 	const result = $derived(parsePlayerList(text));
-	// One preview row per non-empty line, in the order it was pasted.
-	const rows = $derived(
-		[
-			...result.players.map((parsed, index) => ({
-				...parsed,
-				ok: true as const,
-				number: rosterSize + index + 1
-			})),
-			...result.errors.map((error) => ({ ...error, ok: false as const }))
-		].sort((a, b) => a.line - b.line)
-	);
 
 	function importPlayers() {
 		if (!result.players.length) return;
@@ -67,13 +48,15 @@
 			{placeholder}></textarea>
 	</label>
 
-	{#if rows.length}
+	{#if result.players.length || result.errors.length}
 		<section class="flex flex-col gap-2" aria-labelledby="import-preview-heading">
 			<h3 id="import-preview-heading" class="text-sm/5" aria-live="polite">
-				<span class="font-medium"
-					>{result.players.length}
-					{result.players.length === 1 ? 'player' : 'players'} ready to add.</span
-				>
+				{#if result.players.length}
+					<span class="font-medium"
+						>{result.players.length}
+						{result.players.length === 1 ? 'player' : 'players'} ready to add.</span
+					>
+				{/if}
 				{#if result.errors.length}
 					<span class="text-danger">
 						{result.errors.length}
@@ -82,37 +65,16 @@
 				{/if}
 			</h3>
 
-			<ol class="flex flex-col gap-1.5">
-				{#each rows as row (`${row.line}-${row.input}`)}
-					{#if row.ok}
-						<li class="flex min-h-11 items-center gap-3 rounded-xl bg-surface-muted px-3 py-2">
-							<span class="w-8 shrink-0 text-sm/5 font-bold text-muted tabular-nums"
-								>#{row.number}</span
-							>
-							<span class="min-w-0 flex-1 truncate font-medium">{row.player.name}</span>
-							<span class="flex shrink-0 gap-1">
-								{#each row.player.eligiblePositions as position (position)}
-									<span
-										class={[
-											'grid size-6 place-items-center rounded-full text-xs font-medium text-ink',
-											CHIP_STYLES[position]
-										]}
-										title={POSITION_LABELS[position]}
-									>
-										<span aria-hidden="true">{POSITION_LABELS[position].charAt(0)}</span>
-										<span class="sr-only">{POSITION_LABELS[position]}</span>
-									</span>
-								{/each}
-							</span>
-						</li>
-					{:else}
+			{#if result.errors.length}
+				<ol class="flex flex-col gap-1.5">
+					{#each result.errors as error (`${error.line}-${error.input}`)}
 						<li class="flex flex-col gap-0.5 rounded-xl bg-danger/5 px-3 py-2 text-sm/5">
-							<span class="truncate text-ink">{row.input}</span>
-							<p class="text-danger"><strong>Line {row.line}:</strong> {row.message}</p>
+							<span class="truncate text-ink">{error.input}</span>
+							<p class="text-danger"><strong>Line {error.line}:</strong> {error.message}</p>
 						</li>
-					{/if}
-				{/each}
-			</ol>
+					{/each}
+				</ol>
+			{/if}
 		</section>
 	{/if}
 
