@@ -2,7 +2,7 @@
 
 Status: foundational system, version 0.1.
 
-QTeam inherits QSet's visual language—Ubuntu type, green and black accents, soft gray surfaces, compact controls, and rounded geometry—but not its product-specific components or layouts. See `QSET_DESIGN.md` for the source system.
+QTeam inherits QSet's visual language—Ubuntu type, mint green, black, and white, soft gray surfaces, compact controls, and rounded geometry—but not its product-specific components or layouts. See `QSET_DESIGN.md` for the source system.
 
 This document is the source of truth for QTeam. Add product patterns only after they exist in QTeam in at least two places.
 
@@ -16,7 +16,7 @@ QTeam should feel:
 - calm by default, with strong actions easy to find;
 - useful on small screens and comfortable on larger ones.
 
-Use green for progress, positive actions, and selected states. Use black for high contrast and emphasis. Let white and soft gray surfaces carry most of the interface.
+Use mint green for progress, positive actions, and selected states. Use black for high contrast and emphasis. Let white and soft gray surfaces carry most of the interface.
 
 ## Foundations
 
@@ -24,9 +24,13 @@ Use green for progress, positive actions, and selected states. Use black for hig
 
 | Token | Value | Use |
 |---|---:|---|
-| `--color-brand` | `#4CAF50` | Brand, primary actions, positive and selected states |
-| `--color-brand-soft` | `rgb(76 175 80 / 12%)` | Selected rows, badges, subtle action backgrounds |
-| `--color-brand-faint` | `rgb(76 175 80 / 8%)` | Low-emphasis highlights |
+| `--color-brand` | `#3EB489` | Brand fills: primary buttons, active chips |
+| `--color-brand-strong` | `#237A5A` | Brand as text, icons, borders, and indicators on light surfaces |
+| `--color-brand-soft` | `rgb(62 180 137 / 14%)` | Selected rows, badges, subtle action backgrounds |
+| `--color-brand-faint` | `rgb(62 180 137 / 8%)` | Low-emphasis highlights |
+| `--color-defender` | `#4C8DF6` | Defender card accent |
+| `--color-midfielder` | `#3EB489` | Midfielder card accent |
+| `--color-forward` | `#F5B82E` | Forward card accent |
 | `--color-ink` | `#171717` | Default text and icons |
 | `--color-black` | `#000000` | Highest-emphasis surfaces and actions |
 | `--color-muted` | `#666666` | Secondary text that remains readable on light surfaces |
@@ -47,7 +51,8 @@ Rules:
 - Brand green is semantic, not decoration.
 - Pair status color with text or an icon.
 - Keep most surfaces neutral so state changes remain obvious.
-- Use `--color-ink` on brand green. White on `#4CAF50` does not meet WCAG contrast requirements.
+- Use `--color-ink` or black on brand green (about 7:1). White on `#3EB489` is only 2.6:1 and fails.
+- Mint on white also fails for text and meaningful graphics. Use `--color-brand-strong` (5.2:1) when brand color has to carry meaning on a light surface, such as a selected border, the active tab, or a status icon.
 - Reserve subtle and disabled colors for nonessential or unavailable content.
 
 ### Typography
@@ -93,7 +98,7 @@ Use a 4 px base grid.
 - Use `24–32px` between sections.
 - Let parent containers own spacing. Prefer flex or grid `gap` and padding.
 - Avoid margins for component layout unless the spacing cannot reasonably belong to a parent.
-- Prefer spacing over divider lines.
+- Do not use divider lines. Separate content with spacing and surface changes (white on canvas).
 - Minimum interactive target: `44 × 44px`.
 
 ### Shape and elevation
@@ -115,6 +120,20 @@ Cards are flat by default. Use a shadow only when a surface floats above another
 - Use normal document flow, flex, and grid; avoid fixed coordinates.
 - Default page gutter: `16px` on small screens, `24px` from `640px`, and `32px` from `1024px`.
 - Center reading and form content rather than stretching it across wide screens.
+- Page width: `--container-page` (`48rem`), used as `max-w-page`.
+
+### Page container
+
+Every horizontal band—header, scrolling content, action bars, bottom nav—uses the same inner container, so edges line up at every width:
+
+```html
+<div class="mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8">…</div>
+```
+
+- Scroll areas stay full width; only the inner container is capped.
+- The header and bottom nav are rounded white bars (`rounded-2xl bg-surface`) inside the page container, floating on the canvas.
+- Put `overflow-y-auto` on the full-width outer element so the scrollbar sits at the window edge.
+- If children already add horizontal padding (for example nav tabs with `px-2`), reduce the container gutter by the same amount so text still aligns.
 - Let data-heavy views use the width they need.
 - Keep primary actions near the content they affect.
 - Respect safe-area insets on installed mobile experiences.
@@ -137,6 +156,7 @@ These controls are shared UI primitives, not QSet product components.
 
 - Height: at least `44px`.
 - Padding: `10px 16px`.
+- Primary: `bg-brand text-ink`. Contrast: `bg-black text-white`. Neutral: `bg-surface-muted text-ink`. Danger: `bg-danger-soft text-danger`.
 - Radius: `8px`.
 - Gap between icon and label: `8px`.
 - Use one primary action per decision area.
@@ -192,9 +212,20 @@ These controls are shared UI primitives, not QSet product components.
 
 - Success confirms completion without interrupting the next task.
 - Warnings explain risk before the action.
-- Errors stay close to their source and include recovery.
-- Use toasts only for brief outcomes that do not require a decision.
+- Field and form errors stay next to their field. Other errors use an error toast that says how to recover.
+- Toasts use `svelte-sonner`, placed top-centre and styled in `+layout.svelte`. Use `toast.success` and `toast.error` for outcomes.
+- Confirmations are action toasts through `confirmAction` in `src/lib/notify.ts`: one action and a Cancel. Pass `destructive: true` to make the action red. A newer confirmation cancels the open one.
+- Do not use `alert()` or `confirm()`.
 - Do not use color as the only signal.
+
+### Empty state
+
+Use `EmptyState.svelte` whenever a screen has nothing to show yet:
+
+- a small muted illustration of what will appear (a ghost card or an empty pitch);
+- a short title that states the situation ("No teams yet");
+- one sentence on what to do next;
+- one primary action that takes the user there, when the fix is on another screen.
 
 ## Interaction
 
@@ -223,46 +254,7 @@ Use `120–180ms` transitions for color, opacity, and small transforms. Avoid an
 
 ## Implementation tokens
 
-```css
-:root {
-  color-scheme: light;
-
-  --color-brand: #4caf50;
-  --color-brand-soft: rgb(76 175 80 / 12%);
-  --color-brand-faint: rgb(76 175 80 / 8%);
-  --color-ink: #171717;
-  --color-black: #000;
-  --color-muted: #666;
-  --color-subtle: #a5a5a5;
-  --color-disabled: #ccc;
-  --color-canvas: #f7f7f7;
-  --color-surface-muted: #f5f5f5;
-  --color-surface-strong: #f0f0f0;
-  --color-surface: #fff;
-  --color-warning: #ff8b25;
-  --color-warning-soft: rgb(255 139 37 / 12%);
-  --color-danger: #d32f2f;
-  --color-danger-soft: rgb(211 47 47 / 10%);
-  --color-scrim: rgb(0 0 0 / 68%);
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-pill: 999px;
-  --shadow-overlay: 0 0 32px rgb(0 0 0 / 12%);
-}
-```
+Tokens live in the `@theme static` block of `src/routes/layout.css`. Tailwind turns each one into utilities, so use `bg-brand`, `text-muted`, `border-brand-strong`, `shadow-overlay`, and `max-w-page` rather than `bg-(--color-brand)`. Reach for `var(--color-*)` only outside class names, such as an icon's colour prop.
 
 Add tokens only when a repeated QTeam need appears. Do not create aliases, themes, or a separate token package until the product requires them.
 
@@ -272,7 +264,6 @@ The following depend on QTeam's product model and should be documented when its 
 
 - app shell and navigation;
 - domain-specific cards and lists;
-- empty, onboarding, and first-run experiences;
 - data visualization;
 - responsive behavior for real workflows;
 - dark theme;

@@ -50,7 +50,9 @@ Players (optional check-in) -> Team setup -> Teams
 6. Optionally swap players.
 7. Copy or share the result.
 
-Later screens are unavailable until their input is valid.
+All three screens are always reachable. Until a later screen's input is valid, it shows an empty
+state that explains what is missing and links to the step that fixes it. Empty states are not
+persisted, so a reload returns to the last valid screen.
 
 ## 4. Players
 
@@ -123,8 +125,9 @@ Each row contains:
 - editable position chips;
 - Remove.
 
-Show the total player count and validation errors. Additional position summaries are unnecessary
-for the first release.
+Show the total player count and validation errors.
+
+List players in roster order. Each card shows its roster number, starting at 1.
 
 The user can continue when:
 
@@ -272,7 +275,8 @@ Each team shows:
 - team name;
 - player count;
 - derived formation;
-- players grouped by assigned position.
+- players on a pitch in formation rows: forwards at the top, then midfielders, then defenders
+  nearest the goal. Each player shows initials, roster number, name, and assigned position.
 
 Team names default to Team A, Team B, and so on. Custom names are deferred.
 
