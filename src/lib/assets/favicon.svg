@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-	<rect width="64" height="64" rx="18" fill="#4caf50"/>
-	<path d="M21 18h22v22L32 49 21 40V18Zm7 8v9h8v-9h-8Z" fill="#171717"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 67.96 67.96" fill="none" stroke-linejoin="round">
+	<circle cx="33.98" cy="33.98" r="33.98" fill="#fff"/>
+	<polygon points="24.52,7.60 33.18,12.60 33.18,22.60 24.52,27.60 15.86,22.60 15.86,12.60" stroke="#3c6997" stroke-width="2.4"/>
+	<polygon points="43.44,7.60 52.10,12.60 52.10,22.60 43.44,27.60 34.78,22.60 34.78,12.60" stroke="#3d3922" stroke-width="3.2"/>
+	<polygon points="43.44,7.60 52.10,12.60 52.10,22.60 43.44,27.60 34.78,22.60 34.78,12.60" stroke="#f0ecd5" stroke-width="2.4"/>
+	<polygon points="15.06,23.98 23.72,28.98 23.72,38.98 15.06,43.98 6.40,38.98 6.40,28.98" stroke="#3d3922" stroke-width="3.2"/>
+	<polygon points="15.06,23.98 23.72,28.98 23.72,38.98 15.06,43.98 6.40,38.98 6.40,28.98" stroke="#cb3844" stroke-width="2.4"/>
+	<polygon points="33.98,23.98 42.64,28.98 42.64,38.98 33.98,43.98 25.32,38.98 25.32,28.98" stroke="#1a1a1a" stroke-width="2.4"/>
+	<polygon points="52.90,23.98 61.56,28.98 61.56,38.98 52.90,43.98 44.24,38.98 44.24,28.98" stroke="#d499b9" stroke-width="2.4"/>
+	<polygon points="24.52,40.37 33.18,45.37 33.18,55.37 24.52,60.37 15.86,55.37 15.86,45.37" stroke="#3d3922" stroke-width="3.2"/>
+	<polygon points="24.52,40.37 33.18,45.37 33.18,55.37 24.52,60.37 15.86,55.37 15.86,45.37" stroke="#d2bd51" stroke-width="2.4"/>
+	<polygon points="43.44,40.37 52.10,45.37 52.10,55.37 43.44,60.37 34.78,55.37 34.78,45.37" stroke="#3eb489" stroke-width="2.4"/>
 </svg>

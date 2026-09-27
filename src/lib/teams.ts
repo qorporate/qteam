@@ -19,6 +19,10 @@ const preferredFormations: Record<number, Record<Position, number>> = {
 
 export const TEAM_SIZE_OPTIONS = [4, 5, 6, 7, 8] as const;
 
+export function getPreferredFormation(teamSize: number): Record<Position, number> | undefined {
+	return preferredFormations[teamSize];
+}
+
 export function getTeamSizes(playerCount: number, teamCount: number): number[] {
 	if (
 		!Number.isInteger(playerCount) ||

@@ -48,8 +48,8 @@
 	<label>
 		<span class="sr-only">Player name</span>
 		<input
-			class="min-h-14 w-full rounded-lg border border-black/10 bg-(--color-surface) px-4 py-3 text-lg/7 transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-(--color-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink)"
-			class:border-(--color-danger)={Boolean(nameError)}
+			class="min-h-14 w-full rounded-lg border border-black/10 bg-surface px-4 py-3 text-lg/7 transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+			class:border-danger={Boolean(nameError)}
 			bind:value={name}
 			placeholder="Player name"
 			aria-invalid={nameError ? 'true' : undefined}
@@ -57,17 +57,17 @@
 			oninput={() => (nameError = '')}
 		/>
 		{#if nameError}
-			<span id="manual-name-error" class="text-sm/5 text-(--color-danger)">{nameError}</span>
+			<span id="manual-name-error" class="text-sm/5 text-danger">{nameError}</span>
 		{/if}
 	</label>
 
 	<fieldset aria-describedby={positionError ? 'manual-position-error' : undefined}>
-		<legend class="mb-1 text-base/6 text-(--color-muted)">Positions</legend>
+		<legend class="mb-1 text-base/6 text-muted">Positions</legend>
 		<div class="flex flex-col">
 			{#each POSITIONS as position (position)}
 				<label class="flex min-h-11 cursor-pointer items-center gap-3 text-base/6">
 					<input
-						class="size-5 accent-(--color-brand)"
+						class="size-5 accent-brand"
 						type="checkbox"
 						checked={positions.includes(position)}
 						onchange={() => toggle(position)}
@@ -78,17 +78,17 @@
 		</div>
 	</fieldset>
 	{#if positionError}
-		<span id="manual-position-error" class="text-sm/5 text-(--color-danger)">{positionError}</span>
+		<span id="manual-position-error" class="text-sm/5 text-danger">{positionError}</span>
 	{/if}
 
 	<div class="grid grid-cols-2 gap-3 pt-1">
 		<button
-			class="min-h-12 rounded-full border border-black/15 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] motion-reduce:active:scale-100"
+			class="min-h-12 rounded-full border border-black/15 bg-surface px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.96] motion-reduce:active:scale-100"
 			type="button"
 			onclick={cancel}>Cancel</button
 		>
 		<button
-			class="min-h-12 rounded-full border border-black/15 bg-(--color-surface) px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-(--color-surface-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-ink) active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-(--color-surface-muted) disabled:text-(--color-disabled) disabled:hover:bg-(--color-surface-muted) disabled:active:scale-100 motion-reduce:active:scale-100"
+			class="min-h-12 rounded-full border border-black/15 bg-surface px-4 py-2.5 font-medium transition-[background-color,transform] duration-150 ease-out hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-disabled disabled:hover:bg-surface-muted disabled:active:scale-100 motion-reduce:active:scale-100"
 			type="submit"
 			disabled={!canAdd}>Add player</button
 		>

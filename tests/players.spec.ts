@@ -2,12 +2,16 @@ import { expect, test } from '@playwright/test';
 
 test('generates teams and restores them after reload', async ({ page }) => {
 	await page.goto('./');
-	await expect(page.getByRole('button', { name: 'Team setup' })).toBeDisabled();
+	await page.getByRole('button', { name: 'Team setup' }).click();
+	await expect(page.getByRole('heading', { name: 'Not enough players yet' })).toBeVisible();
+	await page.getByRole('button', { name: 'Teams', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'No teams yet' })).toBeVisible();
+	await page.getByRole('button', { name: 'Go to players' }).click();
 	await page.getByRole('button', { name: 'Import players' }).click();
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 31 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
-	await page.getByRole('button', { name: 'Import', exact: true }).click();
+	await page.getByRole('button', { name: /^Import \d+ players?$/ }).click();
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await expect(page.getByRole('heading', { name: 'Choose a team size' })).toBeVisible();
@@ -23,26 +27,13 @@ test('generates teams and restores them after reload', async ({ page }) => {
 		origin: 'http://127.0.0.1:4173'
 	});
 	await page.getByRole('button', { name: 'Copy all' }).click();
-	await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
+	await expect(page.getByText('All teams copied.')).toBeVisible();
 	const teamA = page.getByRole('heading', { name: 'Team A' }).locator('xpath=ancestor::section');
 	const teamB = page.getByRole('heading', { name: 'Team B' }).locator('xpath=ancestor::section');
-	const playerFromTeamB = (
-		await teamB
-			.locator('button')
-			.filter({ hasText: /^\d+\./ })
-			.first()
-			.textContent()
-	)?.replace(/^\d+\.\s*/, '');
-	await teamA
-		.locator('button')
-		.filter({ hasText: /^\d+\./ })
-		.first()
-		.click();
-	await teamB
-		.locator('button')
-		.filter({ hasText: /^\d+\./ })
-		.first()
-		.click();
+	const lineup = (team: typeof teamA) => team.getByRole('listitem').getByRole('button');
+	const playerFromTeamB = await lineup(teamB).first().getAttribute('aria-label');
+	await lineup(teamA).first().click();
+	await lineup(teamB).first().click();
 	await expect(page.getByText('Swapped players.')).toBeVisible();
 	await expect(teamA).toContainText(playerFromTeamB ?? '');
 
@@ -68,7 +59,7 @@ test('imports valid players, keeps errors editable, and restores the roster', as
 
 	await expect(page.getByText('2 players ready to add.')).toBeVisible();
 	await expect(page.getByText('Line 3: Unknown position: Goalkeeper.')).toBeVisible();
-	await page.getByRole('button', { name: 'Import', exact: true }).click();
+	await page.getByRole('button', { name: /^Import \d+ players?$/ }).click();
 
 	await expect(page.getByLabel('Player list')).toHaveValue('3. Keeper - Goalkeeper');
 	await page.getByRole('button', { name: 'Cancel' }).click();
@@ -109,9 +100,9 @@ test('adds and edits a player, then starts over', async ({ page }) => {
 		'true'
 	);
 
-	page.once('dialog', (dialog) => dialog.accept());
 	await page.getByRole('button', { name: 'Reset' }).click();
-	await expect(page.getByText('Add players to get started.')).toBeVisible();
+	await page.locator('[data-sonner-toast]').getByRole('button', { name: 'Reset' }).click();
+	await expect(page.getByRole('heading', { name: 'No players yet' })).toBeVisible();
 
 	await page.reload();
 	await expect(page.getByLabel('Player 1')).toHaveCount(0);
@@ -125,7 +116,7 @@ test('checks in players, prioritises them in the first two teams, and clears che
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 12 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
-	await page.getByRole('button', { name: 'Import', exact: true }).click();
+	await page.getByRole('button', { name: /^Import \d+ players?$/ }).click();
 
 	const roster = page.locator('section[aria-labelledby="roster-heading"]').getByRole('listitem');
 	for (let index = 0; index < 8; index++) {
@@ -158,10 +149,11 @@ test('checks in players, prioritises them in the first two teams, and clears che
 	await expect(teamC.getByRole('img', { name: 'Checked in' })).toHaveCount(0);
 
 	await page.getByRole('button', { name: 'Players', exact: true }).click();
-	page.once('dialog', (dialog) => dialog.accept());
 	await page.getByRole('button', { name: 'Clear check-ins' }).click();
+	await page.getByRole('button', { name: 'Discard teams' }).click();
 	await expect(page.getByRole('button', { name: /^Uncheck/ })).toHaveCount(0);
-	await expect(page.getByRole('button', { name: 'Teams', exact: true })).toBeDisabled();
+	await page.getByRole('button', { name: 'Teams', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'No teams yet' })).toBeVisible();
 });
 
 test('keeps a generated roster edit unchanged when confirmation is cancelled', async ({ page }) => {
@@ -170,16 +162,18 @@ test('keeps a generated roster edit unchanged when confirmation is cancelled', a
 	await page
 		.getByLabel('Player list')
 		.fill(Array.from({ length: 8 }, (_, index) => `Player ${index + 1} - Midfielder`).join('\n'));
-	await page.getByRole('button', { name: 'Import', exact: true }).click();
+	await page.getByRole('button', { name: /^Import \d+ players?$/ }).click();
 	await page.getByRole('button', { name: 'Continue' }).click();
 	await page.getByRole('button', { name: /4v4: 2 teams, 4 players each/ }).click();
 	await page.getByRole('button', { name: 'Generate teams' }).click();
 	await page.getByRole('button', { name: 'Players', exact: true }).click();
 
 	const player = page.getByRole('textbox', { name: 'Player 1' });
-	page.once('dialog', (dialog) => dialog.dismiss());
 	await player.fill('Changed name');
+	await expect(page.getByText('Discard generated teams?')).toBeVisible();
+	await page.locator('[data-sonner-toast]').getByRole('button', { name: 'Cancel' }).click();
 
 	await expect(player).toHaveValue('Player 1');
-	await expect(page.getByRole('button', { name: 'Teams', exact: true })).toBeEnabled();
+	await page.getByRole('button', { name: 'Teams', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'Team A' })).toBeVisible();
 });
