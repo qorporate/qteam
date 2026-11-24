@@ -326,6 +326,25 @@ Forwards
 Formatting is a pure function. Copy remains available when native sharing is unavailable or
 cancelled.
 
+
+### 7.3 Draw reveal (experiment)
+
+An opt-in experiment, switched on with **Reveal as a draw** on Team setup. The setting is stored on
+the device under `qteam.experiment.drawReveal`, outside the workspace.
+
+When it is on, Generate opens a draw before the usual team view. Everyone watches one screen:
+
+- Pots are positions: defenders, then midfielders, then forwards, using each player's assigned
+  position.
+- Each tap on Draw next reveals one player and the team they join.
+- Within a pot every team gets one player per round, in a shuffled team order, so captains see
+  their squads grow evenly.
+- Show all reveals the rest. See teams opens the normal team view.
+
+The draw only presents the generated teams. It does not change the generator, positions,
+warnings, swaps, or sharing. The order comes from the generation seed. Draw progress is not saved,
+so a reload shows the full teams.
+
 ## 8. Data model
 
 Store only source state. Derive capacities, formations, scores, and warnings.
@@ -570,6 +589,14 @@ browser.
 
 Done when checked-in players are maximised in Team A and Team B without breaking existing team
 size, position, persistence, and sharing rules.
+
+### Version 7: Draw reveal (experiment)
+
+- Reveal as a draw toggle on Team setup
+- one-at-a-time reveal by position pot after generation
+- no change to generation, swaps, or sharing
+
+Done when user feedback decides whether to keep, change, or remove it.
 
 ## 13. Definition of done
 

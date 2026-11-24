@@ -10,11 +10,15 @@
 	let {
 		playerCount,
 		teamSize,
-		onChoose
+		revealAsDraw,
+		onChoose,
+		onRevealAsDrawChange
 	}: {
 		playerCount: number;
 		teamSize?: number;
+		revealAsDraw: boolean;
 		onChoose: (teamSize: number) => void;
+		onRevealAsDrawChange: (enabled: boolean) => void;
 	} = $props();
 
 	// Same orientation as the teams page: forwards at the top, defenders nearest the goal.
@@ -121,5 +125,34 @@
 				</button>
 			{/each}
 		</fieldset>
+	</section>
+
+	<section class="rounded-2xl bg-surface p-4" aria-labelledby="draw-reveal-heading">
+		<label class="relative flex min-h-11 cursor-pointer items-center justify-between gap-4">
+			<span class="flex min-w-0 flex-col gap-1">
+				<span class="flex flex-wrap items-center gap-2">
+					<span id="draw-reveal-heading" class="font-medium">Reveal as a draw</span>
+					<span
+						class="rounded-full bg-brand-soft px-2 py-0.5 text-xs/4 font-medium text-brand-strong"
+						>Experiment</span
+					>
+				</span>
+				<span class="text-sm/5 text-pretty text-muted">
+					Show players one at a time, pot by pot: defenders, then midfielders, then forwards.
+				</span>
+			</span>
+			<input
+				class="peer sr-only"
+				type="checkbox"
+				role="switch"
+				checked={revealAsDraw}
+				aria-labelledby="draw-reveal-heading"
+				onchange={(event) => onRevealAsDrawChange(event.currentTarget.checked)}
+			/>
+			<span
+				class="relative h-7 w-12 shrink-0 rounded-full bg-muted transition-colors duration-150 ease-out peer-checked:bg-brand-strong peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink after:absolute after:top-1 after:left-1 after:size-5 after:rounded-full after:bg-surface after:shadow-sm after:transition-transform after:duration-150 after:ease-out peer-checked:after:translate-x-5 motion-reduce:transition-none motion-reduce:after:transition-none"
+				aria-hidden="true"
+			></span>
+		</label>
 	</section>
 </div>

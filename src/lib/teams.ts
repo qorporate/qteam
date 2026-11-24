@@ -312,7 +312,7 @@ function canPlay(player: Player, assigned: { assignedPosition: Position }): bool
 	);
 }
 
-function seededRandom(seed: string): () => number {
+export function seededRandom(seed: string): () => number {
 	let state = 2166136261;
 	for (let index = 0; index < seed.length; index++) {
 		state = Math.imul(state ^ seed.charCodeAt(index), 16777619);
@@ -327,7 +327,7 @@ function seededRandom(seed: string): () => number {
 	};
 }
 
-function shuffle<T>(items: T[], random: () => number): T[] {
+export function shuffle<T>(items: T[], random: () => number): T[] {
 	for (let index = items.length - 1; index > 0; index--) {
 		const swapIndex = Math.floor(random() * (index + 1));
 		[items[index], items[swapIndex]] = [items[swapIndex], items[index]];

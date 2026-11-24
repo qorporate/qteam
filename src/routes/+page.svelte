@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import AddPlayersDialog from '$lib/components/AddPlayersDialog.svelte';
+	import DrawReveal from '$lib/components/DrawReveal.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import GeneratedTeams from '$lib/components/GeneratedTeams.svelte';
 	import PlayerRoster from '$lib/components/PlayerRoster.svelte';
@@ -10,7 +11,13 @@
 	import { confirmAction } from '$lib/notify';
 	import { getRosterIssues } from '$lib/players';
 	import { formatTeams } from '$lib/sharing';
-	import { emptyWorkspace, loadWorkspace, saveWorkspace } from '$lib/storage';
+	import {
+		emptyWorkspace,
+		loadDrawReveal,
+		loadWorkspace,
+		saveDrawReveal,
+		saveWorkspace
+	} from '$lib/storage';
 	import { generateTeams, getTeamCountForTargetSize } from '$lib/teams';
 	import type { Player } from '$lib/types/players.types';
 	import type { Workspace } from '$lib/types/storage.types';
@@ -21,13 +28,17 @@
 	// so a reload returns to the last real step.
 	let emptyView = $state<'setup' | 'teams'>();
 	let canShare = $state(false);
+	// Experiment: reveal freshly generated teams as a position-pot draw. Not persisted, so a reload
+	// mid-draw shows the full teams.
+	let revealAsDraw = $state(false);
+	let drawing = $state(false);
 	const screen = $derived(emptyView ?? workspace.screen);
 	const rosterIssues = $derived(getRosterIssues(workspace.roster));
 	const rosterReady = $derived(rosterIssues.length === 0);
 	const hasCheckIns = $derived(workspace.roster.some((player) => player.checkedIn === true));
 	const showPlayerActions = $derived(screen === 'players' && workspace.roster.length > 0);
 	const showSetupActions = $derived(screen === 'setup' && !emptyView);
-	const showTeamsActions = $derived(screen === 'teams' && !emptyView);
+	const showTeamsActions = $derived(screen === 'teams' && !emptyView && !drawing);
 	const primaryButton =
 		'min-h-12 w-full rounded-full bg-brand px-4 py-2.5 font-medium text-ink transition-[background-color,transform] duration-150 ease-out hover:bg-brand/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.96] motion-reduce:active:scale-100';
 	const discardTeams = {
@@ -41,6 +52,7 @@
 		workspace = loaded.workspace;
 		if (loaded.error) toast.error(loaded.error);
 		canShare = typeof navigator.share === 'function';
+		revealAsDraw = loadDrawReveal(localStorage);
 	});
 
 	// Returns false when the change waits for confirmation, so edited inputs can revert until then.
@@ -56,6 +68,7 @@
 
 	function saveWorkspaceState(next: Workspace) {
 		emptyView = undefined;
+		drawing = false;
 		workspace = next;
 		if (!saveWorkspace(localStorage, workspace)) {
 			toast.error('Changes could not be saved on this device.');
@@ -146,6 +159,14 @@
 			screen: 'teams',
 			generated: { seed: result.seed, teams: result.teams }
 		});
+		drawing = revealAsDraw;
+	}
+
+	function setRevealAsDraw(enabled: boolean) {
+		revealAsDraw = enabled;
+		if (!saveDrawReveal(localStorage, enabled)) {
+			toast.error('This setting could not be saved on this device.');
+		}
 	}
 
 	function saveSwap(teams: GeneratedTeam[]) {
@@ -255,7 +276,15 @@
 				<TeamSetup
 					playerCount={workspace.roster.length}
 					teamSize={workspace.teamSize}
+					{revealAsDraw}
 					onChoose={chooseTeamSize}
+					onRevealAsDrawChange={setRevealAsDraw}
+				/>
+			{:else if drawing}
+				<DrawReveal
+					players={workspace.roster}
+					generated={workspace.generated!}
+					onFinish={() => (drawing = false)}
 				/>
 			{:else}
 				<GeneratedTeams

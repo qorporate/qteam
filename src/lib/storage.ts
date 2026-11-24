@@ -185,3 +185,24 @@ function decodeGenerated(
 
 	return getGenerationIssues(roster, teamCount, teams).length ? null : { seed: value.seed, teams };
 }
+
+// Experiment flag, kept outside the workspace so it survives Start over and needs no schema change.
+export const DRAW_REVEAL_KEY = 'qteam.experiment.drawReveal';
+
+export function loadDrawReveal(storage: StorageLike): boolean {
+	try {
+		return storage.getItem(DRAW_REVEAL_KEY) === 'on';
+	} catch {
+		return false;
+	}
+}
+
+export function saveDrawReveal(storage: StorageLike, enabled: boolean): boolean {
+	try {
+		if (enabled) storage.setItem(DRAW_REVEAL_KEY, 'on');
+		else storage.removeItem(DRAW_REVEAL_KEY);
+		return true;
+	} catch {
+		return false;
+	}
+}
